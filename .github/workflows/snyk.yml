@@ -40,7 +40,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           
       - name: Guardar relatório HTML como artefacto
-        if: always()  # garante que corre mesmo se o scan falhar
+        if: always()  # garante que corre mesmo se scan falhar
         uses: actions/upload-artifact@v4
         with:
           name: snyk-html-report
