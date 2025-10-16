@@ -29,11 +29,11 @@ jobs:
 
       - name: Correr Snyk e gerar relatório
         run: |
-          snyk test --file=requirements.txt --json > snyk-report.json || true
+          snyk test --file=requirements.txt --severity-threshold=high --json > snyk-report.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Converter o relatório em HTML
+      - name: Converter relatório em HTML
         if: always()
         run: snyk-to-html -i snyk-report.json -o snyk-report.html
 
@@ -42,9 +42,8 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-
       - name: Guardar relatório HTML como artefacto
-        if: always()  # garante que corre mesmo se scan falhar
+        if: always()  # garante que corre mesmo se o scan falhar
         uses: actions/upload-artifact@v4
         with:
           name: snyk-html-report
