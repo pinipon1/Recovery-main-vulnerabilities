@@ -1,13 +1,16 @@
-    name: Snyk Security Scan
+name: Snyk Security Scan
+
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+
 jobs:
   security:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
@@ -38,7 +41,8 @@ jobs:
         run: snyk monitor --file=requirements.txt
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          
+
+
       - name: Guardar relatório HTML como artefacto
         if: always()  # garante que corre mesmo se scan falhar
         uses: actions/upload-artifact@v4
