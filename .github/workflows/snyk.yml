@@ -27,9 +27,17 @@ jobs:
         run: |
           npm install -g snyk snyk-to-html
 
-      - name: Correr Snyk e gerar relatório
+      # --- Teste 1: gerar relatório completo (todas as vulnerabilidades) ---
+      - name: Correr Snyk e gerar relatório completo
         run: |
           snyk test --file=requirements.txt --json > snyk-report.json || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      # --- Teste 2: verificar se existem vulnerabilidades HIGH ou CRITICAL ---
+      - name: Verificar se há vulnerabilidades graves (High/Critical)
+        run: |
+          snyk test --file=requirements.txt --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
