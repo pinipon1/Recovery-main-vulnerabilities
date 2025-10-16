@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/motadb/Recovery/discussions
+    about: Para discussões gerais, ideias e feedback da comunidade
+  - name: 📖 Documentação
+    url: https://github.com/motadb/Recovery/blob/main/README.md
+    about: Consulte a documentação completa antes de reportar problemas
+  - name: 🚀 Guia de Deploy
+    url: https://github.com/motadb/Recovery/blob/main/DEPLOY_VERCEL.md
+    about: Guia completo para deploy no Vercel

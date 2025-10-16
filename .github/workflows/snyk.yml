@@ -1,0 +1,47 @@
+    name: Snyk Security Scan
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Instalar Snyk e conversor HTML
+        run: |
+          npm install -g snyk snyk-to-html
+
+      - name: Correr Snyk e gerar relatório
+        run: |
+          snyk test --file=requirements.txt --json > snyk-report.json || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Converter o relatório em HTML
+        if: always()
+        run: snyk-to-html -i snyk-report.json -o snyk-report.html
+
+      - name: Monitorizar projeto no Snyk
+        run: snyk monitor --file=requirements.txt
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          
+      - name: Guardar relatório HTML como artefacto
+        if: always()  # garante que corre mesmo se o scan falhar
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-html-report
+          path: snyk-report.html

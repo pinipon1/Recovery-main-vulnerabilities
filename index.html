@@ -1,0 +1,3156 @@
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cycling Portal - Análise de Performance</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html, body { 
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #f8fafc 60%, #e8f6ef 100%); 
+            margin: 0; 
+            padding: 0; 
+            font-weight: 400;
+            line-height: 1.5;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            /* Fix para mobile viewport */
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        .layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 100%;
+            max-width: 100%;
+            background: #2a2a2a;
+            color: #fff;
+            padding: 20px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-radius: 0;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+            flex-wrap: wrap;
+            position: relative;
+            overflow-x: hidden; /* Prevenir scroll horizontal */
+            box-sizing: border-box;
+            border-bottom: 1px solid #444;
+            margin: 0;
+            left: 0;
+            right: 0;
+        }
+        .settings-box {
+            position: relative;
+        }
+        .sidebar h2 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #fff;
+            letter-spacing: -0.01em;
+            font-weight: 600;
+        }
+        .sidebar label, .sidebar .settings-box label {
+            font-size: 0.9em;
+            color: #b0b8c1;
+            margin-bottom: 2px;
+            display: block;
+            font-weight: 400;
+        }
+        .sidebar input[type="number"], .sidebar input[type="file"] {
+            background: #1a2230;
+            color: #fff;
+            border: 1px solid #34495e;
+            border-radius: 6px;
+            padding: 5px 8px;
+            margin-bottom: 8px;
+            font-size: 0.98em;
+            width: 70px;
+        }
+        .sidebar button {
+            margin-top: 8px;
+            background: #059669;
+            color: #fff;
+            border: none;
+            padding: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .sidebar button:hover {
+            background: #047857;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+        .sidebar h2 {
+            font-size: 1.25em;
+            margin-bottom: 16px;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        .sidebar label {
+            font-size: 1em;
+            color: #b0b8c1;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .sidebar input[type="number"], .sidebar input[type="file"] {
+            background: #1a2230;
+            color: #fff;
+            border: 1px solid #34495e;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-bottom: 10px;
+            font-size: 1em;
+            width: 80px;
+            transition: border 0.2s;
+        }
+        .sidebar input[type="number"]:focus, .sidebar input[type="file"]:focus {
+            border: 1.5px solid #27ae60;
+            outline: none;
+        }
+        .sidebar button {
+            margin-top: 10px;
+            background: linear-gradient(90deg, #27ae60 60%, #219150 100%);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            box-shadow: 0 2px 8px #1a223033;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .sidebar button:hover {
+            background: linear-gradient(90deg, #219150 60%, #27ae60 100%);
+            box-shadow: 0 4px 16px #1a223055;
+        }
+        .atividades-list { list-style: none; padding: 0; margin: 0; }
+        .atividades-list li {
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            transition: background 0.2s, color 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 210px;
+            font-size: 1em;
+            background: #1a2230;
+            border: 1px solid transparent;
+        }
+        .atividades-list li.selected, .atividades-list li:hover {
+            background: #27ae60;
+            color: #fff;
+            border: 1.5px solid #27ae60;
+        }
+        .main {
+            flex: 1;
+            background: linear-gradient(135deg, #f8fafc 60%, #e8f6ef 100%);
+            border-radius: 0;
+            margin: 0 auto;
+            box-shadow: none;
+            padding: 48px 32px 32px 32px;
+            min-width: 0;
+            max-width: 1400px; /* Largura máxima controlada */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        
+        /* Classe para padronizar largura de todos os elementos */
+        .content-width {
+            width: 100%;
+            max-width: 1200px; /* Largura consistente para todos os elementos */
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #1e293b;
+            margin-top: 0;
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            text-align: center;
+        }
+        .indicadores-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+            width: 100%;
+            max-width: 1200px; /* Mesma largura que outros elementos */
+            margin: 0 auto 24px auto;
+        }
+        
+        /* Estilo tabela para indicadores do resumo */
+        .indicadores-tabela {
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border: 1px solid rgba(226,232,240,0.6);
+            overflow: hidden;
+        }
+        .indicador-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            padding: 24px 20px;
+            min-width: 140px;
+            max-width: none; /* Remover limitação de largura */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-size: 0.85em;
+            font-weight: 400;
+            color: #6b7280;
+            transition: all 0.2s ease;
+            border: 1px solid #f3f4f6;
+            position: relative;
+        }
+        .indicador-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+            border-color: #e5e7eb;
+        }
+        .indicador-card .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        .indicador-card .card-label {
+            font-size: 0.8em;
+            color: #9ca3af;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .indicador-card .valor {
+            color: #111827;
+            font-size: 2.2em;
+            font-weight: 700;
+            line-height: 1;
+            margin: 0;
+        }
+        .indicador-card .card-change {
+            font-size: 0.75em;
+            color: #6b7280;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+        .error { color: #c0392b; }
+        #map {
+            height: 350px !important;
+            width: 100% !important;
+            margin: 24px 0 0 0;
+            border-radius: 12px;
+            box-shadow: 0 1px 8px #bbb;
+            position: relative !important;
+            z-index: 1 !important;
+            background: #f8f9fa !important;
+        }
+        @media (max-width: 900px) {
+            .sidebar { 
+                padding: 16px 20px; 
+                gap: 20px; 
+                justify-content: space-between;
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                left: 0;
+                right: 0;
+                position: relative;
+            }
+            .main { padding: 18px 20px; }
+            .indicadores-cards { gap: 12px; }
+            .indicador-card { 
+                min-width: 140px; 
+                max-width: 180px; 
+                padding: 16px 18px 14px 18px;
+                font-size: 0.85em;
+            }
+            .indicador-card .valor {
+                font-size: 1.5em;
+            }
+            h1 { font-size: 1.5em; }
+        }
+        
+        /* Correção específica para mobile - remover margens brancas */
+        @media (max-width: 768px) {
+            html, body {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                -webkit-text-size-adjust: 100% !important;
+            }
+            
+            .layout {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .sidebar {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 12px 16px !important;
+                margin: 0 !important;
+                box-sizing: border-box !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 12px !important;
+            }
+            
+            .main {
+                padding: 20px 16px 16px 16px !important; /* Padding simétrico menor para mobile */
+                margin: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            
+            .content-width {
+                max-width: 100% !important; /* Em mobile, usar toda a largura disponível */
+                padding: 0 !important;
+            }
+            
+            .indicadores-cards {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            
+            .graficos-resumo {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+            
+            /* Em mobile, indicadores do painel de atividade voltam para uma coluna */
+            #painel-atividade .indicadores-cards {
+                grid-template-columns: 1fr !important; /* Uma coluna em mobile */
+                gap: 16px !important;
+            }
+            
+            /* Melhorar tabelas em mobile */
+            table {
+                font-size: 14px !important;
+                overflow-x: auto !important;
+                display: block !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Touch targets maiores */
+            .atividade-row {
+                min-height: 44px !important;
+            }
+            
+            /* Mapas responsivos */
+            #heatmap-container, #map {
+                min-height: 300px !important;
+                width: 100% !important;
+            }
+            
+            /* Botões maiores */
+            button {
+                min-height: 44px !important;
+                padding: 12px 16px !important;
+                font-size: 16px !important;
+            }
+            
+            /* Gráficos responsivos em mobile */
+            .grafico-card-resumo {
+                padding: 16px 20px !important;
+                min-height: 120px !important;
+            }
+            
+            .grafico-card-resumo canvas {
+                height: 100px !important;
+                min-height: 100px !important;
+            }
+        }
+        
+        /* Media query para telas muito pequenas */
+        @media (max-width: 480px) {
+            .main {
+                padding: 16px 12px 12px 12px !important;
+            }
+            
+            .detalhes-tabela-moderna {
+                padding: 0 8px !important;
+            }
+            
+            h1 {
+                font-size: 1.3em !important;
+                margin-bottom: 16px !important;
+            }
+            
+            .metricas-table th,
+            .metricas-table td {
+                padding: 8px 12px !important;
+                font-size: 13px !important;
+            }
+            
+            .sidebar {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
+        }
+        
+        /* Estilos para Previsão do Tempo */
+        .previsao-tempo-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .previsao-tempo-table th {
+            background: linear-gradient(135deg, #374151 0%, #475569 100%);
+            color: white;
+            padding: 16px 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .previsao-tempo-table td {
+            padding: 14px 12px;
+            text-align: center;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.9em;
+        }
+        
+        .previsao-tempo-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .previsao-tempo-table tr:hover {
+            background-color: #f9fafb;
+        }
+        
+        .dia-semana {
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .temperatura {
+            color: #dc2626;
+            font-weight: 500;
+        }
+        
+        .vento {
+            color: #6b7280;
+        }
+        
+        .chuva {
+            color: #2563eb;
+        }
+        
+        .polen {
+            color: #059669;
+            font-size: 0.9em;
+        }
+        
+        .indice-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.8em;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            min-width: 85px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .indice-excelente { 
+            background: linear-gradient(135deg, #059669, #16a34a);
+            box-shadow: 0 3px 6px rgba(5, 150, 105, 0.3);
+        }
+        .indice-muito-bom { 
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            box-shadow: 0 3px 6px rgba(22, 163, 74, 0.3);
+        }
+        .indice-bom { 
+            background: linear-gradient(135deg, #65a30d, #84cc16);
+            box-shadow: 0 3px 6px rgba(101, 163, 13, 0.3);
+        }
+        .indice-razoavel { 
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            box-shadow: 0 3px 6px rgba(217, 119, 6, 0.3);
+        }
+        .indice-mau { 
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            box-shadow: 0 3px 6px rgba(220, 38, 38, 0.3);
+        }
+        .indice-pessimo { 
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+            box-shadow: 0 3px 6px rgba(153, 27, 27, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .previsao-tempo-table {
+                font-size: 0.8em;
+            }
+            .previsao-tempo-table th,
+            .previsao-tempo-table td {
+                padding: 10px 6px;
+            }
+            .indice-badge {
+                font-size: 0.7em;
+                padding: 4px 8px;
+            }
+        }
+        
+        /* Estilos para campo de região melhorado */
+        #input-regiao:focus {
+            outline: none;
+            border-color: #27ae60;
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+        }
+        
+        #input-regiao::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .cidade-suggestion {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            color: #e5e7eb;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        
+        .cidade-suggestion:hover {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .cidade-suggestion:last-child {
+            border-bottom: none;
+        }
+        
+        .cidade-suggestion .cidade-nome {
+            font-weight: 600;
+        }
+        
+        .cidade-suggestion .cidade-pais {
+            font-size: 0.8em;
+            color: rgba(255,255,255,0.7);
+            margin-left: 8px;
+        }
+        
+        /* Estilos para indicadores de loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #27ae60;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            max-width: 300px;
+        }
+        
+        .loading-text {
+            color: #374151;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .loading-subtitle {
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .atividade-row.loading {
+            background-color: #f3f4f6 !important;
+            opacity: 0.7;
+            cursor: wait !important;
+        }
+        
+        .atividade-row.loading::after {
+            content: " ⏳";
+        }
+        
+        /* Estilos melhorados para hover da lista de atividades */
+        .atividade-row {
+            transition: all 0.3s ease !important;
+            position: relative;
+        }
+        
+        .atividade-row:hover {
+            background: #f8f9fa !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            border-left: 4px solid #666 !important;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateY(-50%) translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(-50%) translateX(0);
+            }
+        }
+        
+        /* Pulse animation para loading state */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Estilos para scroll moderno da tabela de atividades */
+        .tabela-scroll-container {
+            max-height: 400px;
+            overflow: auto; /* Scroll vertical e horizontal */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 18px;
+            max-width: 100%;
+        }
+        
+        /* Tabela responsiva com largura controlada */
+        .tabela-scroll-container table {
+            min-width: 800px; /* Largura mínima para todas as colunas */
+            max-width: 1200px; /* Largura máxima */
+            width: 100%;
+        }
+        
+        /* Container do conteúdo com largura controlada */
+        .conteudo-atividades {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Responsividade para dispositivos móveis */
+        @media (max-width: 768px) {
+            .tabela-scroll-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .tabela-scroll-container table {
+                min-width: 600px; /* Menor em mobile */
+                font-size: 0.9em;
+            }
+            
+            .graficos-resumo {
+                width: 100% !important;
+                max-width: 1200px !important; /* Mesma largura que outros elementos */
+                margin: 32px auto 0 auto !important;
+            }
+            
+            .grafico-card-resumo {
+                max-width: 100% !important;
+            }
+            
+            .grafico-card-resumo canvas {
+                max-width: 100% !important;
+                height: 90px !important;
+            }
+            
+        /* Garantir que todos os canvas sejam responsivos */
+        canvas {
+            max-width: 100% !important;
+            min-width: 300px !important;
+            width: 100% !important;
+            box-sizing: border-box;
+        }            .main {
+                padding: 24px 16px 16px 16px;
+            }
+        }        .tabela-scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .tabela-scroll-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        .tabela-scroll-container::-webkit-scrollbar-thumb {
+            background: #999;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+        
+        .tabela-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+        
+        /* Scrollbar horizontal */
+        .tabela-scroll-container::-webkit-scrollbar:horizontal {
+            height: 8px;
+        }
+        
+        .tabela-scroll-container::-webkit-scrollbar-track:horizontal {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .tabela-scroll-container::-webkit-scrollbar-thumb:horizontal {
+            background: #999;
+            border-radius: 4px;
+        }
+        
+        /* Indicador visual para scroll */
+        .scroll-indicator {
+            text-align: center;
+            padding: 8px;
+            background: #f8f9fa;
+            color: #666;
+            font-size: 0.85em;
+            font-weight: 600;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 4px;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        /* Estilos para corrigir o layout do mapa */
+        #heatmap-container {
+            background: #f8fafc;
+        }
+        
+        #heatmap-map {
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+            background: #f8fafc !important;
+        }
+        
+        .leaflet-container {
+            width: 100% !important;
+            height: 100% !important;
+            background: #f8fafc !important;
+        }
+        
+        /* Canvas para animação de vento */
+        #wind-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            border-radius: 16px;
+            background: transparent;
+        }
+        
+        /* Animação de vento simples com CSS */
+        .wind-particle {
+            position: absolute;
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(180deg, rgba(30, 144, 255, 0.8) 0%, rgba(30, 144, 255, 0.1) 100%);
+            border-radius: 1px;
+            pointer-events: none;
+            animation: windFlow 3s linear infinite;
+        }
+        
+        @keyframes windFlow {
+            0% {
+                transform: translate(0, 0) rotate(45deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(100px, 50px) rotate(45deg);
+                opacity: 0;
+            }
+        }
+        
+        .pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        /* Gráficos do resumo - largura controlada */
+        .graficos-resumo {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 32px 0 0 0 !important;
+            box-sizing: border-box;
+        }
+        
+        .grafico-card-resumo {
+            width: 100% !important;
+            max-width: 100% !important;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(26, 34, 48, 0.13);
+            padding: 20px 0; /* Zero padding lateral */
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            box-sizing: border-box;
+            overflow: hidden; /* Para garantir que o conteúdo não saia */
+        }
+        
+        .grafico-card-resumo canvas {
+            width: 100% !important;
+            max-width: none !important;
+            height: 120px !important;
+            min-height: 120px !important;
+            box-sizing: border-box;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Garantir visibilidade da página de detalhes */
+        #painel-atividade {
+            width: 100% !important;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            padding: 20px !important;
+            box-sizing: border-box !important;
+            background: transparent !important;
+            position: relative !important;
+            z-index: 1 !important;
+            min-height: 500px !important;
+            display: block !important;
+        }
+        
+        /* Garantir que os canvas dos gráficos de detalhes tenham dimensões adequadas */
+        #painel-atividade canvas {
+            width: 100% !important;
+            min-width: 300px !important;
+            max-width: 700px !important;
+            height: 70px !important;
+        }
+        
+        #painel-graficos {
+            width: 100% !important;
+            max-width: 1200px !important; /* Mesma largura dos outros elementos */
+            margin: 28px auto 0 auto !important;
+        }
+        
+        #painel-atividade h1 {
+            color: #1e293b !important;
+            margin-bottom: 20px !important;
+        }
+        
+        #painel-atividade .indicadores-cards {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important; /* Duas colunas iguais */
+            gap: 20px !important;
+            margin-bottom: 20px !important;
+            width: 100% !important;
+            max-width: 1200px !important; /* Mesma largura do mapa */
+            margin: 0 auto 20px auto !important;
+        }
+        
+        /* Ajustar cards dentro das colunas do painel de atividade */
+        #painel-atividade .indicador-card {
+            width: 100% !important;
+            max-width: none !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Ajuste do layout principal quando mostra detalhes */
+        .main:has(#painel-atividade[style*="display: block"]) {
+            align-items: flex-start !important;
+        }
+        
+        /* Garantir que os elementos dentro do painel sejam visíveis */
+        #painel-atividade > * {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        
+        /* SOLUÇÃO SIMPLES E EFICAZ */
+        #painel-resumo, #painel-atividade {
+            width: 100%;
+        }
+        
+        /* Garantir que painel-atividade esteja escondido por padrão */
+        #painel-atividade {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+        
+        /* Quando escondido, realmente esconder */
+        #painel-resumo[style*="display: none"],
+        #painel-atividade[style*="display: none"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        
+        /* Quando visível, garantir visibilidade */
+        #painel-resumo[style*="display: block"],
+        #painel-atividade[style*="display: block"] {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        
+        /* Esconder heatmap quando detalhes ativos */
+        body:has(#painel-atividade[style*="display: block"]) #heatmap-rotas-section {
+            display: none !important;
+        }
+        
+        /* Tabela Moderna dos Detalhes da Atividade - 2 Colunas */
+        .detalhes-tabela-moderna {
+            max-width: 1200px; /* Mesma largura que outros elementos */
+            margin: 0 auto;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        .tabela-coluna {
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            border: 1px solid rgba(226,232,240,0.6);
+            overflow: hidden;
+        }
+        
+        .metricas-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .metricas-table thead {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        .metricas-table th {
+            padding: 16px 20px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .metricas-table tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        .metricas-table tbody tr:hover {
+            background: rgba(59,130,246,0.04);
+            transform: scale(1.01);
+        }
+        
+        .metricas-table tbody tr:nth-child(even) {
+            background: rgba(248,250,252,0.3);
+        }
+        
+        .metricas-table tbody tr:nth-child(even):hover {
+            background: rgba(59,130,246,0.06);
+        }
+        
+        .metricas-table td {
+            padding: 14px 20px;
+            border-bottom: 1px solid rgba(226,232,240,0.4);
+            vertical-align: middle;
+        }
+        
+        .metric-icon {
+            font-size: 18px;
+            margin-right: 8px;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+        
+        .metric-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .metric-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: right;
+        }
+        
+        .metric-highlight {
+            background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(147,51,234,0.08) 100%) !important;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        .metric-highlight .metric-value {
+            color: #1d4ed8;
+            font-size: 18px;
+        }
+        
+        /* Responsividade para móveis */
+        @media (max-width: 768px) {
+            .detalhes-tabela-moderna {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                margin: 0 auto;
+                max-width: 100%;
+                padding: 0 16px;
+            }
+            
+            .tabela-coluna {
+                border-radius: 12px;
+            }
+            
+            .metricas-table th,
+            .metricas-table td {
+                padding: 12px 16px;
+            }
+            
+            .metricas-table th {
+                font-size: 11px;
+            }
+            
+            .metric-label {
+                font-size: 12px;
+            }
+            
+            .metric-value {
+                font-size: 15px;
+            }
+            
+            .metric-highlight .metric-value {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <header class="sidebar">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <h2 style="margin: 0; font-size: 1.3em; font-weight: 700; letter-spacing: -0.02em;">Cycling Portal</h2>
+                <!-- Definições mais práticas em linha -->
+                <div style="display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; background: rgba(255,255,255,0.1); padding: 12px 16px; border-radius: 6px; margin-left: 16px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                        <label for="input-idade" style="font-size: 14px; color: #b0b8c1; font-weight: 400; margin: 0; padding: 0;">Idade:</label>
+                        <input type="number" id="input-idade" min="1" max="120" value="41" style="width: 50px; height: 24px; padding: 4px 6px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 14px; text-align: center; margin: 0; vertical-align: baseline;">
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 8px;">
+                        <label for="input-peso" style="font-size: 14px; color: #b0b8c1; font-weight: 400; margin: 0; padding: 0;">Peso:</label>
+                        <input type="number" id="input-peso" min="1" max="300" value="83" style="width: 50px; height: 24px; padding: 4px 6px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 14px; text-align: center; margin: 0; vertical-align: baseline;">
+                        <span style="font-size: 12px; color: #9ca3af; margin: 0; padding: 0;">kg</span>
+                    </div>
+                    <div style="display: flex; align-items: baseline; gap: 8px; position: relative;">
+                        <label for="input-regiao" style="font-size: 14px; color: #b0b8c1; font-weight: 400; margin: 0; padding: 0;">Região:</label>
+                        <input type="text" id="input-regiao" value="Viseu, PT" placeholder="Ex: Porto, PT" 
+                               style="width: 90px; height: 24px; padding: 4px 6px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: rgba(0,0,0,0.2); color: white; font-size: 14px; margin: 0; vertical-align: baseline;" 
+                               autocomplete="off">
+                        <div id="cidade-suggestions" style="display: none; position: absolute; top: 100%; left: 65px; right: 0; background: #1a2230; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; margin-top: 4px; max-height: 200px; overflow-y: auto;">
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="input-alergico-polen" style="accent-color: #666; margin: 0; width: 14px; height: 14px; vertical-align: middle;">
+                        <label for="input-alergico-polen" style="font-size: 14px; color: #b0b8c1; cursor: pointer; font-weight: 400; margin: 0; padding: 0;">Alérgico</label>
+                    </div>
+                </div>
+                <div id="strava-login-btn"></div>
+            </div>
+        </header>
+        <main class="main">
+            <div id="painel-resumo" style="display:block;">
+                <div class="conteudo-atividades">
+                    <h1 style="text-align:center;font-size:2em;margin-bottom:18px;font-weight:700;letter-spacing:-0.03em;">Resumo Geral</h1>
+                    <div id="resumo-geral" class="indicadores-cards content-width"></div>
+                
+                    <!-- Seção de Previsão do Tempo -->
+                <div id="previsao-tempo-section" style="margin-top:32px; margin-bottom:32px;">
+                    <h2 style="text-align:center; font-size:1.4em; margin-bottom:16px; color:#1e293b; font-weight:600; letter-spacing:-0.02em;">Previsão do Tempo - Índice de Ciclismo</h2>
+                    <div id="previsao-tempo-container">
+                        <div style="text-align:center; padding:20px; color:#666;">
+                            Estamos a verificar a direcção do vento...
+                        </div>
+                    </div>
+                
+                    <div id="tabela-atividades" class="content-width" style="margin-top:32px;"></div>
+                    <div id="container-graficos-resumo" class="content-width"></div>
+                    
+
+                </div>
+            </div>
+            
+            <!-- Seção de Heatmap das Rotas - FORA do painel-resumo -->
+            <div id="heatmap-rotas-section" style="margin-top:32px; margin-bottom:32px;">
+                <div class="conteudo-atividades">
+                    <h2 style="text-align:center; font-size:1.4em; margin-bottom:16px; color:#1e293b; font-weight:600; letter-spacing:-0.02em;">Heatmap das Últimas 10 Atividades</h2>
+                    <div id="heatmap-container" class="content-width" style="height:500px; border-radius:12px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.1); display:block; position:relative;">
+                            <div style="text-align:center; padding:40px; color:#666; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                                <div>
+                                    <div class="loading-spinner" style="margin: 0 auto 16px auto;"></div>
+                                    <div style="font-size:1.1em; font-weight:600; margin-bottom:8px;">A carregar heatmap...</div>
+                                    <div style="font-size:0.9em;">Mapeando as suas rotas favoritas</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="painel-atividade" style="display:none !important; visibility:hidden !important; opacity:0 !important; height:0 !important; overflow:hidden !important;">
+                <div style="margin-bottom:18px;">
+                    <button id="btn-voltar-resumo" style="background:#475569;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:bold;">← Voltar ao Resumo</button>
+                </div>
+                <h1 id="titulo-atividade">Detalhes da Atividade</h1>
+                <div id="indicadores" class="indicadores-cards">Selecione uma atividade para ver os detalhes.</div>
+                <div id="map" style="position: relative;">
+                    <canvas id="wind-canvas"></canvas>
+                </div>
+                <div id="painel-graficos" class="content-width graficos-resumo" style="margin:32px auto 0 auto;display:flex;flex-direction:column;gap:32px;">
+                    <div class="grafico-card-resumo">
+                        <div style='font-weight:600;font-size:1.2em;margin-bottom:16px;text-align:center;color:#1e293b;padding:0 12px;'>Velocidade Durante a Atividade</div>
+                        <canvas id="grafico-velocidade" height="120" style="width:100%;height:120px!important;"></canvas>
+                    </div>
+                    <div class="grafico-card-resumo">
+                        <div style='font-weight:600;font-size:1.2em;margin-bottom:16px;text-align:center;color:#1e293b;padding:0 12px;'>Frequência Cardíaca Durante a Atividade</div>
+                        <canvas id="grafico-fc" height="120" style="width:100%;height:120px!important;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+    <style>
+        .tab-btn {
+            background: #e8f6ef;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+            padding: 12px 0;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .tab-btn.tab-active {
+            background: #fff;
+            color: #27ae60;
+            border-bottom: 2px solid #27ae60;
+        }
+    </style>
+    <script>
+    // Navegação entre painéis
+    document.addEventListener('DOMContentLoaded', function() {
+        const painelResumo = document.getElementById('painel-resumo');
+        const painelAtividade = document.getElementById('painel-atividade');
+        const btnVoltar = document.getElementById('btn-voltar-resumo');
+        
+        btnVoltar.addEventListener('click', function() {
+            const heatmapSection = document.getElementById('heatmap-rotas-section');
+            
+            // Mostrar resumo
+            painelResumo.style.display = 'block';
+            
+            // Mostrar heatmap
+            if (heatmapSection) {
+                heatmapSection.style.display = 'block';
+            }
+            
+            // Esconder detalhes completamente
+            painelAtividade.style.display = 'none';
+            painelAtividade.style.visibility = 'hidden';
+            painelAtividade.style.opacity = '0';
+            painelAtividade.style.height = '0';
+            painelAtividade.style.overflow = 'hidden';
+        });
+        
+        // Carregar resumo geral ao abrir
+        carregarResumoGeral();
+        carregarPrevisaoTempo();
+        verificarStatusStrava();
+    });
+
+    // Função para carregar resumo geral
+    function carregarResumoGeral() {
+        // Mostrar loading no container do resumo
+        const resumoContainer = document.getElementById('resumo-geral');
+        if (resumoContainer) {
+            resumoContainer.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6b7280;">
+                    <div class="loading-spinner" style="margin: 0 auto 16px auto;"></div>
+                    <div style="font-size: 1.1em; font-weight: 600; margin-bottom: 8px;">Estamos a afinar as mudanças...</div>
+                    <div style="font-size: 0.9em;">A processar atividades do Strava</div>
+                </div>
+            `;
+        }
+        
+        fetch('/api/atividades')
+            .then(() => fetch('/api/resumo_geral'))
+            .then(r => r.json())
+            .then(data => {
+                const indics = data.atividades;
+                if (!indics || indics.length === 0) {
+                    document.getElementById('resumo-geral').innerHTML = '<div style="color:#888">Nenhuma atividade encontrada.</div>';
+                    document.getElementById('tabela-atividades').innerHTML = '';
+                    return;
+                }
+                // Acumulados e médias
+                let totalDist = 0, totalDesnivel = 0, totalVO2 = 0, totalVel = 0, totalFC = 0, totalTempo = 0, countVO2 = 0, countVel = 0, countFC = 0;
+                let altMax = null, altMin = null;
+                indics.forEach(d => {
+                    if (d.distancia_total) totalDist += d.distancia_total;
+                    if (d.desnivel_acumulado) totalDesnivel += d.desnivel_acumulado;
+                    if (d.vo2max_estimado) { totalVO2 += d.vo2max_estimado; countVO2++; }
+                    if (d.velocidade_media) { totalVel += d.velocidade_media; countVel++; }
+                    if (d.frequencia_cardiaca_media) { totalFC += d.frequencia_cardiaca_media; countFC++; }
+                    if (d.tempo_total) totalTempo += d.tempo_total;
+                    if (d.altitude_maxima !== null && d.altitude_maxima !== undefined) altMax = altMax === null ? d.altitude_maxima : Math.max(altMax, d.altitude_maxima);
+                    if (d.altitude_minima !== null && d.altitude_minima !== undefined) altMin = altMin === null ? d.altitude_minima : Math.min(altMin, d.altitude_minima);
+                });
+                const n = indics.length;
+                                // Dados para a tabela de resumo
+                                const resumoMetricas = [
+                                    { label: 'Tempo Total', valor: `${Math.floor(totalTempo/60)}h ${(totalTempo%60).toFixed(0)}min`, icone: '⏱️', cor: '#ca8a04' },
+                                    { label: 'Distância Total', valor: `${totalDist.toFixed(1)} km`, icone: '📏', cor: '#dc2626' },
+                                    { label: 'Desnível Acumulado', valor: `${totalDesnivel.toFixed(0)} m`, icone: '⛰️', cor: '#475569' },
+                                    { label: 'VO₂max Médio', valor: `${countVO2 ? (totalVO2/countVO2).toFixed(1) : '-'} ml/kg/min`, icone: '🫁', cor: '#9333ea' },
+                                    { label: 'Velocidade Média', valor: `${countVel ? (totalVel/countVel).toFixed(1) : '-'} km/h`, icone: '🏃', cor: '#ea580c' },
+                                    { label: 'FC Média', valor: `${countFC ? (totalFC/countFC).toFixed(0) : '-'} bpm`, icone: '❤️', cor: '#ec4899' },
+                                    { label: 'Tempo de Repouso', valor: data.tempo_repouso ? data.tempo_repouso.texto : '-', icone: '💤', cor: '#64748b' }
+                                ];
+                                
+                                // Dividir em duas colunas
+                                // Dividir métricas em duas colunas de forma equilibrada
+                                const colunaResumo1 = [];
+                                const colunaResumo2 = [];
+                                
+                                // Distribuir alternadamente para equilibrar as colunas
+                                resumoMetricas.forEach((metric, index) => {
+                                    if (index % 2 === 0) {
+                                        colunaResumo1.push(metric);
+                                    } else {
+                                        colunaResumo2.push(metric);
+                                    }
+                                });
+                                
+                                function criarTabelaResumo(metricas, titulo) {
+                                    return `
+                                        <div class="indicadores-tabela">
+                                            <table class="metricas-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="width: 50%;">${titulo}</th>
+                                                        <th style="width: 50%; text-align: right;">Valor</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${metricas.map(metric => `
+                                                        <tr class="metric-highlight">
+                                                            <td>
+                                                                <div class="metric-label">
+                                                                    <span class="metric-icon">${metric.icone}</span>
+                                                                    ${metric.label}
+                                                                </div>
+                                                            </td>
+                                                            <td class="metric-value">${metric.valor}</td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    `;
+                                }
+                                
+                                document.getElementById('resumo-geral').innerHTML = `
+                                    <div class="detalhes-tabela-moderna">
+                                        ${criarTabelaResumo(colunaResumo1, 'Métricas Gerais')}
+                                        ${criarTabelaResumo(colunaResumo2, 'Performance')}
+                                    </div>
+                                `;
+                        // Removed stray parenthesis
+                    // Tabela/lista de atividades clicáveis
+                    let tabela = `<table style="width:100%;border-collapse:collapse;margin-top:18px;">
+                        <tr style="background:#e8f6ef;font-weight:600;">
+                            <td style="padding:8px;">Atividade</td>
+                            <td style="padding:8px;">Data</td>
+                            <td style="padding:8px;">Distância</td>
+                            <td style="padding:8px;">Desnível</td>
+                            <td style="padding:8px;">VO₂max</td>
+                            <td style="padding:8px;">Vel. Média</td>
+                            <td style="padding:8px;">FC Média</td>
+                            <td style="padding:8px;">TRIMP</td>
+                        </tr>`;
+                    // Tabela ordenada com mais recente em cima
+                    const indicsTabela = [...indics].sort((a, b) => new Date(b.data_atividade) - new Date(a.data_atividade));
+                    
+                    indicsTabela.forEach((d, index) => {
+                        // Encontrar índice original para manter compatibilidade com clique
+                        const originalIndex = indics.findIndex(orig => orig.data_atividade === d.data_atividade && orig.nome_atividade === d.nome_atividade);
+                        
+                        // Formatar data para exibição (só data, sem hora)
+                        let dataFormatada = d.data_atividade || '-';
+                        if (d.data_atividade) {
+                            try {
+                                dataFormatada = new Date(d.data_atividade).toLocaleDateString('pt-PT');
+                            } catch (e) {
+                                dataFormatada = d.data_atividade.split('T')[0];
+                            }
+                        }
+                        
+                        tabela += `<tr class="atividade-row" data-index="${originalIndex}" style="border-bottom:1px solid #eee;cursor:pointer;">
+                            <td style="padding:8px;">${d.nome_atividade || '-'}<\/td>
+                            <td style="padding:8px;">${dataFormatada}<\/td>
+                            <td style="padding:8px;">${d.distancia_total !== null && d.distancia_total !== undefined ? d.distancia_total.toFixed(1) + ' km' : '-'}<\/td>
+                            <td style="padding:8px;">${d.desnivel_acumulado !== null && d.desnivel_acumulado !== undefined ? d.desnivel_acumulado + ' m' : '-'}<\/td>
+                            <td style="padding:8px;">${d.vo2max_estimado !== null && d.vo2max_estimado !== undefined ? d.vo2max_estimado + ' ml/kg/min' : '-'}<\/td>
+                            <td style="padding:8px;">${d.velocidade_media !== null && d.velocidade_media !== undefined ? d.velocidade_media.toFixed(1) + ' km/h' : '-'}<\/td>
+                            <td style="padding:8px;">${d.frequencia_cardiaca_media !== null && d.frequencia_cardiaca_media !== undefined ? d.frequencia_cardiaca_media + ' bpm' : '-'}<\/td>
+                            <td style="padding:8px;">${d.trimp !== null && d.trimp !== undefined && d.trimp > 0 ? d.trimp.toFixed(1) : '-'}<\/td>
+                        <\/tr>`;
+                    });
+                    // Criar cópia ordenada para os gráficos (mais antigo para mais recente)
+                    const indicsGraficos = [...indics].sort((a, b) => new Date(a.data_atividade) - new Date(b.data_atividade));
+                    
+                    // Labels para gráficos - só a data (sem hora)
+                    let labels = indicsGraficos.map(d => {
+                        if (d.data_atividade) {
+                            try {
+                                return new Date(d.data_atividade).toLocaleDateString('pt-PT');
+                            } catch (e) {
+                                return d.data_atividade.split('T')[0]; // fallback
+                            }
+                        }
+                        return d.nome_atividade || '';
+                    });
+                    
+                    let velMedias = indicsGraficos.map(d => (d.velocidade_media !== null && d.velocidade_media !== undefined) ? Number(d.velocidade_media.toFixed(2)) : null);
+                    let vo2s = indicsGraficos.map(d => (d.vo2max_estimado !== null && d.vo2max_estimado !== undefined) ? Number(d.vo2max_estimado) : null);
+                    tabela += '</table>';
+                    
+                    // Criar container com scroll moderno
+                    const tabelaScrollContainer = `
+                        <div class="tabela-scroll-container">
+                            ${tabela}
+                        </div>
+                        ${indicsTabela.length > 5 ? '<div class="scroll-indicator">📜 Faça scroll para ver mais atividades (' + indicsTabela.length + ' total)</div>' : ''}
+                    `;
+                    
+                    document.getElementById('tabela-atividades').innerHTML = tabelaScrollContainer;
+                    // Adicionar evento de clique nas linhas da tabela
+                    setTimeout(() => {
+                        document.querySelectorAll('.atividade-row').forEach(row => {
+                            row.onclick = function() {
+                                const activityIndex = parseInt(row.getAttribute('data-index'));
+                                const atividade = indics[activityIndex];
+                                
+                                // Feedback visual imediato
+                                marcarAtividadeCarregando(row);
+                                const mensagemAtividade = obterMensagemAtividade(atividade.nome_atividade);
+                                mostrarLoading(mensagemAtividade.texto, mensagemAtividade.subtitulo);
+                                
+                                // Buscar atividade completa com coordenadas
+                                fetch('/api/atividades_unificadas')
+                                    .then(r => {
+                                        if (!r.ok) {
+                                            throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                                        }
+                                        return r.json();
+                                    })
+                                    .then(data => {
+                                        // Encontrar a atividade correspondente pela data (mais confiável que o nome)
+                                        const atividadeCompleta = data.atividades.find(a => {
+                                            // Comparar as datas formatadas
+                                            const dataResumo = new Date(atividade.data_atividade).toISOString();
+                                            const dataCompleta = new Date(a.data_atividade).toISOString();
+                                            return dataResumo === dataCompleta;
+                                        });
+                                        
+                                        if (atividadeCompleta) {
+                                            // Pequeno delay para melhor UX (evitar flash muito rápido)
+                                            setTimeout(() => {
+                                                esconderLoading();
+                                                desmarcarAtividadeCarregando(row);
+                                                
+                                                // MÉTODO SIMPLES: Esconder resumo, mostrar detalhes
+                                                const painelResumo = document.getElementById('painel-resumo');
+                                                const painelAtividade = document.getElementById('painel-atividade');
+                                                const heatmapSection = document.getElementById('heatmap-rotas-section');
+                                                
+                                                // Esconder resumo completamente
+                                                painelResumo.style.display = 'none';
+                                                
+                                                // Esconder heatmap 
+                                                if (heatmapSection) {
+                                                    heatmapSection.style.display = 'none';
+                                                }
+                                                
+                                                // Mostrar detalhes
+                                                mostrarDetalhesAtividade(atividadeCompleta);
+                                                painelAtividade.style.display = 'block';
+                                                painelAtividade.style.visibility = 'visible';
+                                                painelAtividade.style.opacity = '1';
+                                                painelAtividade.style.height = 'auto';
+                                                painelAtividade.style.overflow = 'visible';
+                                            }, 300);
+                                        } else {
+                                            esconderLoading();
+                                            desmarcarAtividadeCarregando(row);
+                                            console.error('Atividade não encontrada nas atividades unificadas');
+                                            alert('❌ Erro: Não foi possível carregar os detalhes desta atividade.');
+                                        }
+                                    })
+                                    .catch(err => {
+                                        esconderLoading();
+                                        desmarcarAtividadeCarregando(row);
+                                        console.error('Erro ao carregar atividade:', err);
+                                        alert(`❌ Erro ao carregar os detalhes da atividade:\n${err.message}`);
+                                    });
+                            };
+                        });
+                    }, 100);
+
+                    // Gráficos de progresso
+                    // (linhas removidas, já garantido acima)
+                    let graficosHtml = `
+                            <div class="graficos-resumo" style="display:flex;flex-direction:column;gap:24px;">
+                                <div class="grafico-card-resumo">
+                                    <div style='font-weight:600;font-size:1.1em;margin-bottom:8px;text-align:center;'>Progresso Velocidade Média</div>
+                                    <canvas id="grafico-prog-vel" height="90" style="width:100%;height:90px!important;"></canvas>
+                                </div>
+                                <div class="grafico-card-resumo">
+                                    <div style='font-weight:600;font-size:1.1em;margin-bottom:8px;text-align:center;'>Progresso VO₂max</div>
+                                    <canvas id="grafico-prog-vo2" height="90" style="width:100%;height:90px!important;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('tabela-atividades').insertAdjacentHTML('afterend', graficosHtml);
+                    // Chart.js - Velocidade Média
+                    setTimeout(() => {
+                        const ctxVel = document.getElementById('grafico-prog-vel').getContext('2d');
+                        new Chart(ctxVel, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Velocidade Média (km/h)',
+                                    data: velMedias,
+                                    borderColor: '#27ae60',
+                                    backgroundColor: 'rgba(39,174,96,0.08)',
+                                    pointRadius: 3,
+                                    borderWidth: 2,
+                                    tension: 0.2,
+                                }]
+                            },
+                            options: {
+                                plugins: { legend: { display: false } },
+                                scales: {
+                                    x: { display: true, title: { display: false } },
+                                    y: { display: true, title: { display: true, text: 'km/h' }, min: null, max: null }
+                                },
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                animation: false,
+                                layout: { padding: 8 },
+                                elements: { line: { borderJoinStyle: 'round' } },
+                                interaction: { intersect: false, mode: 'index' }
+                            }
+                        });
+                        
+                        // Chart.js - VO2max
+                        const ctxVO2 = document.getElementById('grafico-prog-vo2').getContext('2d');
+                        new Chart(ctxVO2, {
+                                type: 'line',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        label: 'VO₂max (ml/kg/min)',
+                                        data: vo2s,
+                                        borderColor: '#2980b9',
+                                        backgroundColor: 'rgba(41,128,185,0.08)',
+                                        pointRadius: 3,
+                                        borderWidth: 2,
+                                        tension: 0.2,
+                                    }]
+                                },
+                                options: {
+                                    plugins: { legend: { display: false } },
+                                    scales: {
+                                        x: { display: true, title: { display: false } },
+                                        y: { display: true, title: { display: true, text: 'ml/kg/min' }, min: null, max: null }
+                                    },
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    animation: false,
+                                    layout: { padding: 8 },
+                                    elements: { line: { borderJoinStyle: 'round' } },
+                                    interaction: { intersect: false, mode: 'index' }
+                                }
+                            });
+                    }, 100);
+                });
+                
+                // Carregar heatmap das rotas após os gráficos
+                setTimeout(() => carregarHeatmapRotas(), 200);
+            // Fim da função carregarResumoGeral
+        }
+
+        // Função para carregar previsão do tempo
+        function carregarPrevisaoTempo() {
+            const regiao = document.getElementById('input-regiao').value || 'Viseu, PT';
+            const container = document.getElementById('previsao-tempo-container');
+            
+            container.innerHTML = `
+                <div style="text-align: center; padding: 32px; color: #6b7280;">
+                    <div class="loading-spinner" style="margin: 0 auto 16px auto; width: 40px; height: 40px;"></div>
+                    <div style="font-size: 1.1em; font-weight: 600; margin-bottom: 8px;">🌤️ Carregando previsão...</div>
+                    <div style="font-size: 0.9em;">A obter dados meteorológicos para ${regiao}</div>
+                </div>
+            `;
+            
+            const alergicoInput = document.getElementById('input-alergico-polen');
+            const alergico = alergicoInput ? alergicoInput.checked : false;
+            
+            fetch(`/api/previsao_tempo?regiao=${encodeURIComponent(regiao)}&alergico_polen=${alergico}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        container.innerHTML = `
+                            <div style="text-align:center; padding:20px; color:#dc2626; background:#fef2f2; border-radius:8px; border:1px solid #fecaca;">
+                                <strong>Erro:</strong> ${data.error}<br>
+                                <small>${data.message || ''}</small>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    renderizarTabelaPrevisao(data);
+                })
+                .catch(error => {
+                    console.error('Erro ao carregar previsão:', error);
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:20px; color:#dc2626; background:#fef2f2; border-radius:8px; border:1px solid #fecaca;">
+                            <strong>Erro de conexão</strong><br>
+                            <small>Não foi possível carregar a previsão do tempo. Verifique sua conexão.</small>
+                        </div>
+                    `;
+                });
+        }
+
+        // Função para renderizar tabela de previsão
+        function renderizarTabelaPrevisao(data) {
+            const container = document.getElementById('previsao-tempo-container');
+            
+            let html = `
+                <div style="text-align:center; margin-bottom:12px; color:#6b7280; font-size:0.9em;">
+                    📍 ${data.regiao}
+                </div>
+                <table class="previsao-tempo-table">
+                    <thead>
+                        <tr>
+                            <th>Dia</th>
+                            <th>Temperatura</th>
+                            <th>Vento</th>
+                            <th>Chuva</th>
+                            ${data.tem_polen ? '<th>Pólen</th>' : ''}
+                            <th>Índice Ciclismo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            data.previsao.forEach(dia => {
+                const indiceClass = `indice-${dia.indice.nivel.replace('_', '-')}`;
+                
+                // Preparar dados de pólen se disponíveis
+                let polenHtml = '';
+                if (data.tem_polen && dia.polen) {
+                    const polen = dia.polen;
+                    
+                    // Informação de qualidade do ar (se disponível)
+                    let qualidadeArInfo = '';
+                    if (polen.qualidade_ar) {
+                        const aqi = polen.qualidade_ar.aqi;
+                        const aqiTexto = aqi === 1 ? 'Boa' : aqi === 2 ? 'Razoável' : aqi === 3 ? 'Moderada' : aqi === 4 ? 'Ruim' : 'Muito Ruim';
+                        const aqiCor = aqi === 1 ? '#16a34a' : aqi === 2 ? '#65a30d' : aqi === 3 ? '#d97706' : aqi === 4 ? '#dc2626' : '#991b1b';
+                        qualidadeArInfo = `<div style="font-size:0.65em; color:${aqiCor};">🌬️ ${aqiTexto}</div>`;
+                    }
+                    
+                    polenHtml = `
+                        <td class="polen">
+                            <div style="display:flex; align-items:center; gap:4px;">
+                                <span style="color:${polen.nivel.cor};">${polen.nivel.emoji}</span>
+                                <div>
+                                    <div style="font-size:0.9em; font-weight:600;">${polen.nivel.texto}</div>
+                                    <div style="font-size:0.7em; color:#6b7280;">
+                                        ${polen.arvores !== null ? `🌳${polen.arvores}` : ''}
+                                        ${polen.ervas !== null ? ` 🌿${polen.ervas}` : ''}
+                                        ${polen.plantas !== null ? ` 🌾${polen.plantas}` : ''}
+                                    </div>
+                                    ${qualidadeArInfo}
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                } else if (data.tem_polen) {
+                    polenHtml = '<td class="polen">-</td>';
+                }
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="dia-semana">${dia.dia_semana}</div>
+                            <div style="font-size:0.8em; color:#6b7280;">${dia.data}</div>
+                        </td>
+                        <td class="temperatura">
+                            <div>${dia.temp_max}° / ${dia.temp_min}°</div>
+                            <div style="font-size:0.8em; color:#6b7280;">${dia.descricao}</div>
+                        </td>
+                        <td class="vento">${dia.vento} km/h</td>
+                        <td class="chuva">${dia.prob_chuva}%</td>
+                        ${polenHtml}
+                        <td>
+                            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                                <span class="indice-badge ${indiceClass}">
+                                    ${dia.indice.texto}
+                                </span>
+                                <div style="width: 80px; height: 6px; background-color: #e5e7eb; border-radius: 3px; overflow: hidden;">
+                                    <div style="width: ${dia.indice.pontuacao || 0}%; height: 100%; background-color: ${dia.indice.cor}; border-radius: 3px; transition: width 0.3s ease;"></div>
+                                </div>
+                                <div style="font-size: 0.7em; color: #6b7280; font-weight: 500;">${dia.indice.pontuacao || 0}%</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+                <div style="text-align:center; margin-top:12px; font-size:0.8em; color:#6b7280;">
+                    💡 <strong>Índice baseado em:</strong> Temperatura ideal (15-25°C), Vento moderado (<20km/h), Baixa probabilidade de chuva<br>
+                    ${data.tem_polen ? '🌸 <strong>Pólen:</strong> 🌳 Árvores, 🌿 Ervas, 🌾 Plantas (0-5: Muito Baixo a Muito Alto)' : ''}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+
+        // Sugestões de cidades portuguesas populares
+        const cidadesPortuguesas = [
+            { nome: 'Lisboa', pais: 'PT', display: 'Lisboa, PT' },
+            { nome: 'Porto', pais: 'PT', display: 'Porto, PT' },
+            { nome: 'Braga', pais: 'PT', display: 'Braga, PT' },
+            { nome: 'Coimbra', pais: 'PT', display: 'Coimbra, PT' },
+            { nome: 'Viseu', pais: 'PT', display: 'Viseu, PT' },
+            { nome: 'Aveiro', pais: 'PT', display: 'Aveiro, PT' },
+            { nome: 'Faro', pais: 'PT', display: 'Faro, PT' },
+            { nome: 'Leiria', pais: 'PT', display: 'Leiria, PT' },
+            { nome: 'Guarda', pais: 'PT', display: 'Guarda, PT' },
+            { nome: 'Évora', pais: 'PT', display: 'Évora, PT' },
+            { nome: 'Bragança', pais: 'PT', display: 'Bragança, PT' },
+            { nome: 'Santarém', pais: 'PT', display: 'Santarém, PT' },
+            { nome: 'Viana do Castelo', pais: 'PT', display: 'Viana do Castelo, PT' },
+            { nome: 'Vila Real', pais: 'PT', display: 'Vila Real, PT' },
+            { nome: 'Castelo Branco', pais: 'PT', display: 'Castelo Branco, PT' }
+        ];
+
+        function setupCidadeSuggestions() {
+            const inputRegiao = document.getElementById('input-regiao');
+            const suggestionsDiv = document.getElementById('cidade-suggestions');
+            
+            if (!inputRegiao || !suggestionsDiv) return;
+            
+            // Mostrar sugestões ao focar no campo
+            inputRegiao.addEventListener('focus', function() {
+                mostrarSugestoes('');
+            });
+            
+            // Filtrar sugestões conforme digita
+            inputRegiao.addEventListener('input', function() {
+                const valor = this.value.toLowerCase();
+                mostrarSugestoes(valor);
+            });
+            
+            // Esconder sugestões ao clicar fora
+            document.addEventListener('click', function(e) {
+                if (!inputRegiao.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                    suggestionsDiv.style.display = 'none';
+                }
+            });
+            
+            function mostrarSugestoes(filtro) {
+                const sugestoesFiltradas = cidadesPortuguesas.filter(cidade => 
+                    cidade.nome.toLowerCase().includes(filtro) || 
+                    cidade.display.toLowerCase().includes(filtro)
+                );
+                
+                if (sugestoesFiltradas.length === 0) {
+                    suggestionsDiv.style.display = 'none';
+                    return;
+                }
+                
+                suggestionsDiv.innerHTML = sugestoesFiltradas.map(cidade => 
+                    `<div class="cidade-suggestion" onclick="selecionarCidade('${cidade.display}')">
+                        <span class="cidade-nome">${cidade.nome}</span>
+                        <span class="cidade-pais">${cidade.pais}</span>
+                    </div>`
+                ).join('');
+                
+                suggestionsDiv.style.display = 'block';
+            }
+        }
+        
+        function selecionarCidade(cidadeDisplay) {
+            const inputRegiao = document.getElementById('input-regiao');
+            const suggestionsDiv = document.getElementById('cidade-suggestions');
+            
+            inputRegiao.value = cidadeDisplay;
+            suggestionsDiv.style.display = 'none';
+            
+            // Carregar previsão automaticamente
+            carregarPrevisaoTempo();
+        }
+
+        // Mensagens engraçadas de ciclismo
+        function obterMensagemCiclismo() {
+            const mensagens = [
+                { texto: 'Estamos a afinar as mudanças...', subtitulo: 'Preparando a bicicleta para a aventura' },
+                { texto: 'A calibrar os pneus...', subtitulo: 'Pressão perfeita para o teu pedal' },
+                { texto: 'A verificar a corrente...', subtitulo: 'Tudo engrenado para ti' },
+                { texto: 'Estamos a subir a colina dos dados...', subtitulo: 'Quase no topo!' },
+                { texto: 'A pedalar pelos servidores...', subtitulo: 'Ritmo constante, já chegamos' },
+                { texto: 'Fazendo a manutenção da bike...', subtitulo: 'Tudo a funcionar em perfeição' },
+                { texto: 'A escolher o melhor percurso...', subtitulo: 'Sem buracos nem problemas' },
+                { texto: 'Estamos em pelotão...', subtitulo: 'Juntos somos mais rápidos' },
+                { texto: 'A aquecer os músculos...', subtitulo: 'Preparação é meio caminho andado' },
+                { texto: 'Colocando o capacete da segurança...', subtitulo: 'Protecção em primeiro lugar' }
+            ];
+            return mensagens[Math.floor(Math.random() * mensagens.length)];
+        }
+
+        // Mensagens específicas para análise de atividades individuais
+        function obterMensagemAtividade(nomeAtividade) {
+            const mensagens = [
+                { texto: 'A mergulhar nos teus quilómetros...', subtitulo: 'Cada pedalada conta a sua história' },
+                { texto: 'Estamos a decifrar o teu ritmo...', subtitulo: 'Analisando cada batimento cardíaco' },
+                { texto: 'A explorar o teu percurso...', subtitulo: 'Seguindo as tuas pegadas digitais' },
+                { texto: 'Calculando a tua performance...', subtitulo: 'Matemática do ciclismo em ação' },
+                { texto: 'A reconstrair a tua aventura...', subtitulo: 'GPS e dados unidos' },
+                { texto: 'Estamos na tua roda...', subtitulo: 'Seguindo o teu trajeto de perto' },
+                { texto: 'A processar as tuas conquistas...', subtitulo: 'Cada elevação tem o seu valor' },
+                { texto: 'Desbravando os teus dados...', subtitulo: 'Como um explorador de performance' },
+                { texto: 'A mapear a tua jornada...', subtitulo: 'Do início ao fim, tudo conta' },
+                { texto: 'Estamos a pedalar pelos detalhes...', subtitulo: 'Nenhum dado fica para trás' }
+            ];
+            const mensagemBase = mensagens[Math.floor(Math.random() * mensagens.length)];
+            
+            // Personalizar com nome da atividade se disponível
+            if (nomeAtividade && nomeAtividade !== 'undefined') {
+                mensagemBase.texto = `A analisar "${nomeAtividade}"...`;
+            }
+            
+            return mensagemBase;
+        }
+
+        // Funções para feedback de loading
+        function mostrarLoading(texto = '', subtitulo = '') {
+            if (!texto || !subtitulo) {
+                const mensagem = obterMensagemCiclismo();
+                texto = mensagem.texto;
+                subtitulo = mensagem.subtitulo;
+            }
+            const loadingHTML = `
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">${texto}</div>
+                        <div class="loading-subtitle">${subtitulo}</div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', loadingHTML);
+        }
+        
+        function esconderLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        
+        function marcarAtividadeCarregando(row) {
+            row.classList.add('loading', 'pulse');
+            row.style.pointerEvents = 'none'; // Prevenir cliques múltiplos
+        }
+        
+        function desmarcarAtividadeCarregando(row) {
+            row.classList.remove('loading', 'pulse');
+            row.style.pointerEvents = 'auto';
+        }
+
+        // Atualizar previsão quando região for alterada
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputRegiao = document.getElementById('input-regiao');
+            if (inputRegiao) {
+                // Setup das sugestões
+                setupCidadeSuggestions();
+                
+                // Carregar previsão ao pressionar Enter
+                inputRegiao.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        document.getElementById('cidade-suggestions').style.display = 'none';
+                        carregarPrevisaoTempo();
+                    }
+                });
+                
+                // Carregar previsão ao perder foco (após 500ms para permitir seleção)
+                inputRegiao.addEventListener('blur', function() {
+                    setTimeout(() => {
+                        if (document.activeElement !== document.getElementById('cidade-suggestions')) {
+                            carregarPrevisaoTempo();
+                        }
+                    }, 500);
+                });
+            }
+        });
+
+        // Função para carregar heatmap das rotas
+        function carregarHeatmapRotas() {
+            const container = document.getElementById('heatmap-container');
+            if (!container) return;
+            
+            console.log('[DEBUG] Carregando heatmap das rotas...');
+            
+            // Mostrar loading
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #6b7280; display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div>
+                        <div class="loading-spinner" style="margin: 0 auto 16px auto; width: 40px; height: 40px;"></div>
+                        <div style="font-size: 1.1em; font-weight: 600; margin-bottom: 8px;">🗺️ Gerando heatmap...</div>
+                        <div style="font-size: 0.9em;">A processar rotas das últimas 10 atividades</div>
+                    </div>
+                </div>
+            `;
+            
+            fetch('/api/heatmap_rotas')
+                .then(response => {
+                    console.log('[DEBUG] Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('[DEBUG] Dados do heatmap recebidos:', data);
+                    console.log('[DEBUG] data.success:', data.success);
+                    console.log('[DEBUG] data.rotas:', data.rotas);
+                    console.log('[DEBUG] data.rotas.length:', data.rotas ? data.rotas.length : 'undefined');
+                    
+                    if (!data.success) {
+                        console.log('[DEBUG] Erro do servidor:', data.error);
+                        container.innerHTML = `
+                            <div style="text-align:center; padding:40px; color:#dc2626; background:#fef2f2; border-radius:12px; border:2px solid #fecaca;">
+                                <div style="font-size:3em; margin-bottom:16px;">❌</div>
+                                <div style="font-size:1.1em; font-weight:600; margin-bottom:8px;">Erro no servidor</div>
+                                <div style="font-size:0.9em; margin-bottom:16px;">${data.error || 'Erro desconhecido'}</div>
+                                <button onclick="carregarHeatmapRotas()" style="background:#dc2626; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">🔄 Tentar Novamente</button>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    if (!data.rotas || data.rotas.length === 0) {
+                        console.log('[DEBUG] Nenhuma rota encontrada para heatmap');
+                        container.innerHTML = `
+                            <div style="text-align:center; padding:40px; color:#f59e0b; background:#fffbeb; border-radius:12px; border:2px solid #fed7aa;">
+                                <div style="font-size:3em; margin-bottom:16px;">�‍♂️</div>
+                                <div style="font-size:1.1em; font-weight:600; margin-bottom:8px;">Atividades Sem GPS</div>
+                                <div style="font-size:0.9em; margin-bottom:8px;">As atividades existem mas não têm coordenadas GPS para criar o mapa</div>
+                                <div style="font-size:0.8em; color:#92400e; margin-bottom:16px;">💡 Dica: Ativa o GPS no Strava antes de gravar atividades</div>
+                                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                                    <button onclick="carregarHeatmapRotas()" style="background:#f59e0b; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.9em;">🔄 Tentar Novamente</button>
+                                    <button onclick="window.open('/auth/strava', '_blank')" style="background:#fc4c02; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.9em;">🔗 Conectar Strava</button>
+                                    <button onclick="console.log('=== DEBUG HEATMAP ==='); fetch('/api/resumo_geral').then(r => r.json()).then(d => {console.log('Resumo - Total atividades:', d.atividades ? d.atividades.length : 0); console.log('Resumo - Dados:', d);}); fetch('/api/heatmap_rotas').then(r => r.json()).then(d => {console.log('Heatmap - Total rotas:', d.rotas ? d.rotas.length : 0); console.log('Heatmap - Dados:', d);}); fetch('/api/atividades_unificadas').then(r => r.json()).then(d => {console.log('Unificadas - Total:', d.atividades ? d.atividades.length : 0); console.log('Unificadas - Com GPS:', d.atividades ? d.atividades.filter(a => a.coordenadas && a.coordenadas.length > 0).length : 0); console.log('Unificadas - Dados:', d);});" style="background:#6b7280; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-size:0.9em;">🔍 Debug Completo</button>
+                                </div>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Limpar container e criar div do mapa
+                    container.innerHTML = '<div id="heatmap-map" style="width:100%; height:100%; position:relative;"></div>';
+                    
+                    // Aguardar um pouco para garantir que o div está no DOM e tem dimensões
+                    setTimeout(() => {
+                        criarHeatmapMapa(data.rotas);
+                    }, 150);
+                })
+                .catch(error => {
+                    console.error('[ERRO] Falha ao carregar heatmap:', error);
+                    
+                    // Tentar como fallback buscar das atividades unificadas
+                    console.log('[DEBUG] Tentando fallback com atividades_unificadas...');
+                    
+                    fetch('/api/atividades_unificadas')
+                        .then(r => r.json())
+                        .then(data => {
+                            console.log('[DEBUG] Fallback - dados atividades:', data);
+                            
+                            if (data.atividades && data.atividades.length > 0) {
+                                // Converter formato das atividades para o formato do heatmap
+                                const rotasConvertidas = data.atividades
+                                    .filter(ativ => ativ.coordenadas && ativ.coordenadas.length > 0)
+                                    .slice(0, 10)
+                                    .map(ativ => ({
+                                        id: ativ.id || ativ.nome_atividade,
+                                        name: ativ.nome_atividade || 'Atividade',
+                                        type: 'Ride',
+                                        coordinates: ativ.coordenadas.map(coord => [coord.lat, coord.lon])
+                                    }));
+                                
+                                console.log('[DEBUG] Rotas convertidas:', rotasConvertidas.length);
+                                
+                                if (rotasConvertidas.length > 0) {
+                                    criarHeatmapMapa(rotasConvertidas);
+                                    return;
+                                }
+                            }
+                            
+                            // Se não conseguiu com fallback, mostrar erro
+                            container.innerHTML = `
+                                <div style="text-align:center; padding:40px; color:#dc2626; background:#fef2f2; border-radius:12px; border:1px solid #fecaca;">
+                                    <div style="font-size:2em; margin-bottom:16px;">❌</div>
+                                    <div style="font-size:1.1em; font-weight:600; margin-bottom:8px;">Erro ao carregar heatmap</div>
+                                    <div style="font-size:0.9em; margin-bottom:16px;">${error.message}</div>
+                                    <button onclick="carregarHeatmapRotas()" style="background:#dc2626; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">🔄 Tentar Novamente</button>
+                                </div>
+                            `;
+                        })
+                        .catch(fallbackError => {
+                            console.error('[ERRO] Fallback também falhou:', fallbackError);
+                            container.innerHTML = `
+                                <div style="text-align:center; padding:40px; color:#dc2626; background:#fef2f2; border-radius:12px; border:1px solid #fecaca;">
+                                    <div style="font-size:2em; margin-bottom:16px;">❌</div>
+                                    <div style="font-size:1.1em; font-weight:600; margin-bottom:8px;">Erro ao carregar heatmap</div>
+                                    <div style="font-size:0.9em; margin-bottom:8px;">Erro principal: ${error.message}</div>
+                                    <div style="font-size:0.9em; margin-bottom:16px;">Erro fallback: ${fallbackError.message}</div>
+                                    <button onclick="carregarHeatmapRotas()" style="background:#dc2626; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer;">🔄 Tentar Novamente</button>
+                                </div>
+                            `;
+                        });
+                });
+        }
+        
+        function criarHeatmapMapa(rotas) {
+            try {
+                console.log(`[DEBUG] Criando mapa com ${rotas.length} rotas`);
+                
+                // Verificar se o container existe
+                const mapContainer = document.getElementById('heatmap-map');
+                if (!mapContainer) {
+                    console.error('[ERRO] Container do mapa não encontrado');
+                    return;
+                }
+                
+                // Verificar se temos dados suficientes
+                if (!rotas || rotas.length === 0) {
+                    document.getElementById('heatmap-container').innerHTML = `
+                        <div style="text-align:center; padding:40px; color:#6b7280;">
+                            <div>Nenhuma rota disponível para o heatmap</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Coletar e processar pontos com sistema de densidade refinado
+                let todosOsPontos = [];
+                let bounds = null;
+                let pontosMap = new Map(); // Para rastrear densidade de pontos
+                
+                // Primeira passagem: processar cada atividade separadamente
+                rotas.forEach((rota, rotaIndex) => {
+                    if (rota.coordinates && rota.coordinates.length > 0) {
+                        // Filtrar pontos da atividade para evitar densidade excessiva por velocidade baixa
+                        const pontosFiltrados = rota.coordinates.filter((_, index) => index % 5 === 0);
+                        
+                        // Set para pontos únicos desta atividade (evitar repetições na mesma atividade)
+                        const pontosDestaAtividade = new Set();
+                        
+                        pontosFiltrados.forEach((coord, coordIndex) => {
+                            if (coord.length >= 2 && !isNaN(coord[0]) && !isNaN(coord[1])) {
+                                // Precisão média para agrupar pontos próximos da mesma atividade
+                                const latRounded = Math.round(coord[0] * 8000) / 8000;
+                                const lonRounded = Math.round(coord[1] * 8000) / 8000;
+                                const key = `${latRounded},${lonRounded}`;
+                                
+                                // Só adicionar uma vez por atividade (evita densidade por velocidade baixa)
+                                if (!pontosDestaAtividade.has(key)) {
+                                    pontosDestaAtividade.add(key);
+                                    
+                                    // Contar sobreposições entre atividades diferentes
+                                    if (pontosMap.has(key)) {
+                                        // Esta localização já foi visitada em outra atividade
+                                        pontosMap.set(key, pontosMap.get(key) + 1.0);
+                                    } else {
+                                        // Primeira vez que visitamos esta localização
+                                        pontosMap.set(key, 0.5);
+                                    }
+                                }
+                                
+                                // Calcular bounds
+                                if (!bounds) {
+                                    bounds = [[coord[0], coord[1]], [coord[0], coord[1]]];
+                                } else {
+                                    bounds[0][0] = Math.min(bounds[0][0], coord[0]);
+                                    bounds[0][1] = Math.min(bounds[0][1], coord[1]);
+                                    bounds[1][0] = Math.max(bounds[1][0], coord[0]);
+                                    bounds[1][1] = Math.max(bounds[1][1], coord[1]);
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Segunda passagem: criar array final baseado em repetições entre atividades
+                const intensidades = Array.from(pontosMap.values());
+                const maxIntensidade = Math.max(...intensidades);
+                const minIntensidade = Math.min(...intensidades);
+                
+                console.log(`[DEBUG] Intensidades entre atividades: min=${minIntensidade}, max=${maxIntensidade}`);
+                
+                pontosMap.forEach((intensity, key) => {
+                    const [lat, lon] = key.split(',').map(Number);
+                    
+                    // Intensidade baseada no número de atividades que passaram aqui
+                    let intensidadeFinal;
+                    if (intensity <= 0.5) {
+                        // Só uma atividade passou aqui (azul claro)
+                        intensidadeFinal = 0.2;
+                    } else if (intensity <= 1.5) {
+                        // 2 atividades passaram aqui (azul médio)
+                        intensidadeFinal = 0.4;
+                    } else if (intensity <= 2.5) {
+                        // 3 atividades passaram aqui (transição azul-vermelho)
+                        intensidadeFinal = 0.6;
+                    } else if (intensity <= 3.5) {
+                        // 4 atividades passaram aqui (vermelho claro)
+                        intensidadeFinal = 0.8;
+                    } else {
+                        // 5+ atividades passaram aqui (vermelho intenso)
+                        intensidadeFinal = 1.0;
+                    }
+                    
+                    todosOsPontos.push([lat, lon, intensidadeFinal]);
+                });
+                
+                console.log(`[DEBUG] Total de pontos coletados: ${todosOsPontos.length}`);
+                
+                // Debug: mostrar distribuição de intensidades
+                if (todosOsPontos.length > 0) {
+                    const intensidadesFinais = todosOsPontos.map(p => p[2]);
+                    const distribuicao = {};
+                    intensidadesFinais.forEach(i => {
+                        const nivel = i <= 0.2 ? '1 atividade' : i <= 0.4 ? '2 atividades' : i <= 0.6 ? '3 atividades' : i <= 0.8 ? '4 atividades' : '5+ atividades';
+                        distribuicao[nivel] = (distribuicao[nivel] || 0) + 1;
+                    });
+                    console.log(`[DEBUG] Distribuição por repetições:`, distribuicao);
+                    console.log(`[DEBUG] Range final: ${Math.min(...intensidadesFinais)} a ${Math.max(...intensidadesFinais)}`);
+                }
+                
+                if (todosOsPontos.length === 0) {
+                    document.getElementById('heatmap-container').innerHTML = `
+                        <div style="text-align:center; padding:40px; color:#6b7280;">
+                            <div style="font-size:2em; margin-bottom:16px;">📍</div>
+                            <div style="font-size:1.1em; font-weight:600; margin-bottom:8px;">Nenhum ponto GPS válido encontrado</div>
+                            <div style="font-size:0.9em; margin-bottom:20px;">Importe atividades do Strava para ver o heatmap das rotas</div>
+                            <button onclick="carregarHeatmapRotas()" style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:0.9em; font-weight:500; transition:all 0.2s; box-shadow:0 2px 4px rgba(16,185,129,0.2);" 
+                                    onmouseover="this.style.background='#059669'" 
+                                    onmouseout="this.style.background='#10b981'">
+                                🔄 Tentar Novamente
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Criar mapa Leaflet com configuração aprimorada
+                const map = L.map('heatmap-map', {
+                    preferCanvas: true // Melhor performance para muitos pontos
+                });
+                
+                // Adicionar tiles do OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 18
+                }).addTo(map);
+                
+                // Criar layer de heatmap com contraste otimizado
+                const heatLayer = L.heatLayer(todosOsPontos, {
+                    radius: 8,        // Linhas finas
+                    blur: 4,          // Contornos nítidos
+                    maxZoom: 18,
+                    max: 1.0,         // Máximo = 1.0 para usar toda a gama do gradiente
+                    minOpacity: 0.3,  // Baixo para que pontos únicos sejam mais transparentes
+                    gradient: {
+                        0.0: 'rgba(59, 130, 246, 0.3)',   // Azul muito claro (pontos únicos)
+                        0.2: 'rgba(59, 130, 246, 0.5)',   // Azul claro (rotas ocasionais)
+                        0.5: 'rgba(37, 99, 235, 0.7)',    // Azul médio (alguma repetição)
+                        0.8: 'rgba(239, 68, 68, 0.85)',   // Vermelho (bastante repetição)
+                        1.0: 'rgba(185, 28, 28, 0.95)'    // Vermelho escuro (muito repetido)
+                    }
+                }).addTo(map);                    console.log(`[DEBUG] Heatmap layer criado com ${todosOsPontos.length} pontos`);                    // Ajustar visualização para mostrar todas as rotas
+                    if (bounds) {
+                        const padding = 0.01; // Adicionar margem
+                        const boundsWithPadding = [
+                            [bounds[0][0] - padding, bounds[0][1] - padding],
+                            [bounds[1][0] + padding, bounds[1][1] + padding]
+                        ];
+                        map.fitBounds(boundsWithPadding);
+                    }
+                    
+                    // Adicionar controlo de informação
+                    const info = L.control({position: 'topright'});
+                    info.onAdd = function() {
+                        const div = L.DomUtil.create('div', 'info');
+                        div.style.background = 'rgba(255,255,255,0.9)';
+                        div.style.padding = '8px 12px';
+                        div.style.borderRadius = '6px';
+                        div.style.fontSize = '12px';
+                        div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                        div.innerHTML = `
+                            <strong>Heatmap de ${rotas.length} atividades</strong><br>
+                            <span style="color:#0066ff;">●</span> Baixa frequência<br>
+                            <span style="color:#ff0000;">●</span> Alta frequência
+                        `;
+                        return div;
+                    };
+                    info.addTo(map);
+                    
+                    // Forçar redimensionamento do mapa após criação
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 100);
+                    
+                    console.log('[DEBUG] Heatmap criado com sucesso');
+                
+                // Ajustar visualização para mostrar todas as rotas
+                if (bounds) {
+                    const padding = 0.01; // Adicionar margem
+                    const boundsWithPadding = [
+                        [bounds[0][0] - padding, bounds[0][1] - padding],
+                        [bounds[1][0] + padding, bounds[1][1] + padding]
+                    ];
+                    map.fitBounds(boundsWithPadding);
+                }
+                
+            } catch (error) {
+                console.error('[ERRO] Falha ao criar mapa de heatmap:', error);
+                document.getElementById('heatmap-container').innerHTML = `
+                    <div style="text-align:center; padding:40px; color:#dc2626;">
+                        <div>Erro ao criar mapa: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+        
+
+    </script>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Menu colapsável para settings
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('toggle-settings');
+            const content = document.getElementById('settings-content');
+            const arrow = document.getElementById('settings-arrow');
+            if (toggleBtn && content && arrow) {
+                toggleBtn.addEventListener('click', function() {
+                    if (content.style.display === 'none') {
+                        content.style.display = 'block';
+                        arrow.style.transform = 'rotate(180deg)';
+                    } else {
+                        content.style.display = 'none';
+                        arrow.style.transform = 'rotate(0deg)';
+                    }
+                });
+            }
+        });
+        // Verificar status do Strava e mostrar botão de login
+        function verificarStatusStrava() {
+            fetch('/api/atividades')
+                .then(r => r.json())
+                .then(data => {
+                    const stravaBtn = document.getElementById('strava-login-btn');
+                    if (data.strava_status === 'not-authenticated') {
+                        stravaBtn.innerHTML = '<a href="/strava/auth" style="display:inline-block;background:#FC4C02;color:white;text-decoration:none;padding:8px 16px;border-radius:6px;font-weight:bold;margin:8px 0;">Login com Strava</a>';
+                    } else {
+                        stravaBtn.innerHTML = '<div style="color:#27ae60;font-weight:bold;margin:8px 0;">✓ Conectado ao Strava <a href="/strava/logout" style="color:#e74c3c;text-decoration:none;font-weight:normal;margin-left:8px;">[Logout]</a></div>';
+                    }
+                })
+                .catch(() => {
+                    const stravaBtn = document.getElementById('strava-login-btn');
+                    stravaBtn.innerHTML = '<a href="/strava/auth" style="display:inline-block;background:#FC4C02;color:white;text-decoration:none;padding:8px 16px;border-radius:6px;font-weight:bold;margin:8px 0;">Login com Strava</a>';
+                });
+        }
+
+        // Mostrar detalhes da atividade (fit ou Strava)
+        function mostrarDetalhesAtividade(atividade) {
+            const el = document.getElementById('indicadores');
+            // Mostrar painel de atividade
+            document.getElementById('painel-atividade').style.display = 'block';
+
+            if (atividade.origem === 'strava') {
+                document.getElementById('titulo-atividade').textContent = atividade.nome + (atividade.data_atividade ? ' - ' + atividade.data_atividade : '');
+                el.className = 'indicadores-cards';
+                const json = atividade.json || {};
+                const cards = [
+                    { label: 'Nome', value: atividade.nome },
+                    { label: 'Tipo', value: atividade.tipo || json.type },
+                    { label: 'Distância', value: (json.distance ? (json.distance / 1000).toFixed(2) : atividade.distancia_total) + ' km' },
+                    { label: 'Tempo', value: atividade.tempo_total + ' min' },
+                    { label: 'VO₂max', value: atividade.vo2max_estimado !== undefined ? atividade.vo2max_estimado + ' ml/kg/min' : '-' },
+                    { label: 'Velocidade Média', value: (json.average_speed ? (json.average_speed * 3.6).toFixed(2) : atividade.velocidade_media) + ' km/h' },
+                    { label: 'Velocidade Máx', value: json.max_speed ? (json.max_speed * 3.6).toFixed(2) + ' km/h' : '-' },
+                    { label: 'FC Média', value: json.average_heartrate || atividade.frequencia_cardiaca_media },
+                    { label: 'FC Máx', value: json.max_heartrate },
+                    { label: 'TRIMP', value: atividade.trimp && atividade.trimp > 0 ? atividade.trimp.toFixed(1) : '-' },
+                    { label: 'Cadência Média', value: json.average_cadence },
+                    { label: 'Potência Média', value: json.average_watts },
+                    { label: 'Suffer Score', value: json.suffer_score },
+                    { label: 'Temperatura Média', value: json.average_temp },
+                    { label: 'Altitude Máx', value: json.elev_high },
+                    { label: 'Altitude Mín', value: json.elev_low },
+                    { label: 'Desnível', value: json.total_elevation_gain || atividade.desnivel_acumulado },
+                    { label: 'Calorias', value: json.kilojoules ? Math.round(json.kilojoules) : atividade.calorias },
+                ];
+                // Filtrar apenas valores que existem e são relevantes, mas manter métricas básicas
+                const cardsRelevantes = cards.filter(card => {
+                    // Sempre incluir métricas básicas mesmo se forem '-'
+                    const metricasBasicas = ['Nome', 'Tipo', 'Distância', 'Tempo'];
+                    if (metricasBasicas.includes(card.label)) {
+                        return true;
+                    }
+                    // Para outras métricas, filtrar valores vazios
+                    const valor = card.value !== undefined && card.value !== null && card.value !== 'NaN' && card.value !== '-' && card.value !== '';
+                    return valor;
+                });
+                
+                // Definir quais métricas são principais (destacadas)
+                const metricas_principais = ['Distância', 'Tempo', 'Velocidade Média', 'FC Média', 'VO₂max', 'TRIMP'];
+                
+                // Função para obter ícone e cor da métrica
+                function getMetricStyle(label) {
+                    const styles = {
+                        'Distância': { icone: '📏', cor: '#dc2626' },
+                        'Tempo': { icone: '⏱️', cor: '#ca8a04' },
+                        'Velocidade Média': { icone: '⚡', cor: '#ea580c' },
+                        'Velocidade Máx': { icone: '🚀', cor: '#dc2626' },
+                        'FC Média': { icone: '❤️', cor: '#ec4899' },
+                        'FC Máx': { icone: '💓', cor: '#be185d' },
+                        'VO₂max': { icone: '🫁', cor: '#9333ea' },
+                        'TRIMP': { icone: '💪', cor: '#16a34a' },
+                        'Cadência Média': { icone: '🔄', cor: '#0284c7' },
+                        'Potência Média': { icone: '⚡', cor: '#facc15' },
+                        'Suffer Score': { icone: '😰', cor: '#ef4444' },
+                        'Temperatura Média': { icone: '🌡️', cor: '#22c55e' },
+                        'Altitude Máx': { icone: '⛰️', cor: '#475569' },
+                        'Altitude Mín': { icone: '🏔️', cor: '#64748b' },
+                        'Desnível': { icone: '📈', cor: '#f97316' },
+                        'Calorias': { icone: '🔥', cor: '#eab308' }
+                    };
+                    return styles[label] || { icone: '📊', cor: '#64748b' };
+                }
+                
+                // Dividir métricas em duas colunas equilibradas usando distribuição alternada
+                const coluna1 = []; // Métricas Principais
+                const coluna2 = []; // Dados Adicionais
+                
+                // Distribuir alternadamente para garantir equilíbrio
+                cardsRelevantes.forEach((card, index) => {
+                    if (index % 2 === 0) {
+                        coluna1.push(card);
+                    } else {
+                        coluna2.push(card);
+                    }
+                });
+                
+                function criarTabela(metricas, titulo) {
+                    return `
+                        <div class="tabela-coluna">
+                            <table class="metricas-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50%;">${titulo}</th>
+                                        <th style="width: 50%; text-align: right;">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${metricas.map(card => {
+                                        const isMainMetric = metricas_principais.includes(card.label);
+                                        const style = getMetricStyle(card.label);
+                                        const rowClass = isMainMetric ? 'metric-highlight' : '';
+                                        
+                                        return `
+                                            <tr class="${rowClass}">
+                                                <td>
+                                                    <div class="metric-label">
+                                                        <span class="metric-icon">${style.icone}</span>
+                                                        ${card.label}
+                                                    </div>
+                                                </td>
+                                                <td class="metric-value">${card.value}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                // Manter a classe original e aplicar o conteúdo de duas colunas
+                el.className = 'detalhes-tabela-moderna';
+                el.innerHTML = `
+                    ${criarTabela(coluna1, 'Métricas Principais')}
+                    ${criarTabela(coluna2, 'Dados Adicionais')}
+                `;
+                // Exibir mapa se houver polyline ou coordenadas
+
+
+
+
+
+                                        
+
+
+
+
+
+
+
+
+
+
+
+
+                // Exibir mapa se houver polyline ou coordenadas
+                let desenhouMapa = false;
+                if (atividade.coordenadas && atividade.coordenadas.length > 0) {
+                    exibirMapa(atividade.coordenadas);
+                    desenharGraficos(atividade.coordenadas);
+                    desenhouMapa = true;
+                } else if (atividade.summary_polyline) {
+                    desenharPolylineStrava(atividade.summary_polyline, atividade.start_latlng);
+                    desenhouMapa = true;
+                } else if (json.map && json.map.summary_polyline) {
+                    desenharPolylineStrava(json.map.summary_polyline, json.start_latlng);
+                    desenhouMapa = true;
+                }
+                return;
+            }
+        }
+
+
+
+        // Desenhar gráficos de linhas (velocidade, FC)
+        let chartVel = null;
+        let chartFC = null;
+        let hoverMarker = null;
+        let lastHoverIndex = null;
+        let lastCoords = null;
+
+        // Decodifica polyline do Strava (Google Polyline Algorithm)
+        function decodePolyline(str) {
+            let index = 0, lat = 0, lng = 0, coordinates = [];
+            while (index < str.length) {
+                let b, shift = 0, result = 0;
+                do {
+                    b = str.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+                shift = 0;
+                result = 0;
+                do {
+                    b = str.charCodeAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+                coordinates.push({lat: lat / 1e5, lon: lng / 1e5});
+            }
+            return coordinates;
+        }
+
+        // Desenha rota Strava no mapa usando polyline
+        function desenharPolylineStrava(polyline, startLatLng) {
+            const coords = decodePolyline(polyline);
+            if (!coords || coords.length === 0) {
+                return;
+            }
+            // Limpar mapa anterior e recriar o container
+            let oldMapDiv = document.getElementById('map');
+            let painelGraficos = document.getElementById('painel-graficos');
+            let mapParent = painelGraficos ? painelGraficos.parentNode : (oldMapDiv ? oldMapDiv.parentNode : null);
+            if (!oldMapDiv) {
+                oldMapDiv = document.createElement('div');
+                oldMapDiv.id = 'map';
+                oldMapDiv.style.height = '350px';
+                oldMapDiv.style.width = '100%';
+                oldMapDiv.style.margin = '24px 0 0 0';
+                oldMapDiv.style.borderRadius = '12px';
+                oldMapDiv.style.boxShadow = '0 1px 8px #bbb';
+                if (painelGraficos && mapParent) {
+                    mapParent.insertBefore(oldMapDiv, painelGraficos);
+                } else if (mapParent) {
+                    mapParent.appendChild(oldMapDiv);
+                }
+            } else {
+                const newMapDiv = document.createElement('div');
+                newMapDiv.id = 'map';
+                newMapDiv.style.height = oldMapDiv.style.height;
+                newMapDiv.style.width = oldMapDiv.style.width;
+                newMapDiv.style.margin = oldMapDiv.style.margin;
+                newMapDiv.style.borderRadius = oldMapDiv.style.borderRadius;
+                newMapDiv.style.boxShadow = oldMapDiv.style.boxShadow;
+                if (mapParent) {
+                    mapParent.replaceChild(newMapDiv, oldMapDiv);
+                }
+            }
+            // Inicializa o mapa centrado no início da rota
+            let center = coords[0];
+            window.map = L.map('map').setView([center.lat, center.lon], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(window.map);
+            
+            // Animação de vento CSS simples
+            setTimeout(() => {
+                initSimpleWindAnimation();
+            }, 1500);
+            // Colorir segmentos conforme velocidade se houver dados
+            let speeds = coords.map(c => c.speed).filter(v => v !== null && v !== undefined);
+            let vmin = Math.min(...speeds);
+            let vmax = Math.max(...speeds);
+            if (speeds.length > 1 && vmax > vmin) {
+                for (let i = 1; i < coords.length; i++) {
+                    const c1 = coords[i - 1];
+                    const c2 = coords[i];
+                    const cor = vmax > vmin ? `rgb(${Math.round(255 * (c2.speed - vmin) / (vmax - vmin))},0,${Math.round(255 * (1 - (c2.speed - vmin) / (vmax - vmin)))})` : '#0074D9';
+                    L.polyline([
+                        [c1.lat, c1.lon],
+                        [c2.lat, c2.lon]
+                    ], {color: cor, weight: 5, opacity: 0.9}).addTo(window.map);
+                }
+            } else {
+                L.polyline(coords.map(c => [c.lat, c.lon]), {color: '#0074D9', weight: 5, opacity: 0.9}).addTo(window.map);
+            }
+            window.map.fitBounds(coords.map(c => [c.lat, c.lon]));
+            // Desenhar gráficos se houver dados
+            desenharGraficos(coords);
+        }
+// Exibe o mapa com o trajeto
+function exibirMapa(coordenadas) {
+    console.log('[exibirMapa] coordenadas:', coordenadas);
+    if (!coordenadas || coordenadas.length === 0) {
+        console.log('[exibirMapa] ERRO: Sem coordenadas válidas');
+        return;
+    }
+    // Limpar mapa anterior e recriar o container
+    if (window.map) {
+        window.map.remove();
+        window.map = null;
+    }
+    let oldMapDiv = document.getElementById('map');
+    let painelGraficos = document.getElementById('painel-graficos');
+    let mapParent = painelGraficos ? painelGraficos.parentNode : (oldMapDiv ? oldMapDiv.parentNode : null);
+    console.log('[exibirMapa] oldMapDiv:', oldMapDiv);
+    console.log('[exibirMapa] painelGraficos:', painelGraficos);
+    console.log('[exibirMapa] mapParent:', mapParent);
+    if (!oldMapDiv) {
+        // Se não existe, cria e insere antes do painel de gráficos
+        oldMapDiv = document.createElement('div');
+        oldMapDiv.id = 'map';
+        oldMapDiv.style.height = '350px';
+        oldMapDiv.style.width = '100%';
+        oldMapDiv.style.margin = '24px 0 0 0';
+        oldMapDiv.style.borderRadius = '12px';
+        oldMapDiv.style.boxShadow = '0 1px 8px #bbb';
+        if (painelGraficos && mapParent) {
+            mapParent.insertBefore(oldMapDiv, painelGraficos);
+        } else if (mapParent) {
+            mapParent.appendChild(oldMapDiv);
+        }
+    } else {
+        // Substitui por um novo div para evitar problemas do Leaflet
+        const newMapDiv = document.createElement('div');
+        newMapDiv.id = 'map';
+        newMapDiv.style.height = oldMapDiv.style.height || '350px';
+        newMapDiv.style.width = oldMapDiv.style.width || '100%';
+        newMapDiv.style.margin = oldMapDiv.style.margin || '24px 0 0 0';
+        newMapDiv.style.borderRadius = oldMapDiv.style.borderRadius || '12px';
+        newMapDiv.style.boxShadow = oldMapDiv.style.boxShadow || '0 1px 8px #bbb';
+        console.log('[exibirMapa] Novo div do mapa criado:', newMapDiv);
+        if (mapParent) {
+            mapParent.replaceChild(newMapDiv, oldMapDiv);
+        }
+    }
+    console.log('[exibirMapa] Criando mapa...');
+    window.map = L.map('map').setView([coordenadas[0].lat, coordenadas[0].lon], 14);
+    console.log('[exibirMapa] Mapa criado:', window.map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(window.map);
+    console.log('[exibirMapa] Tiles adicionados');
+    
+    // Animação de vento CSS simples
+    setTimeout(() => {
+        initSimpleWindAnimation();
+    }, 1500);
+    // Encontrar velocidades mín e máx
+    const speeds = coordenadas.map(c => c.speed).filter(v => v !== null && v !== undefined);
+    const vmin = Math.min(...speeds);
+    const vmax = Math.max(...speeds);
+    // Desenhar segmentos coloridos
+    for (let i = 1; i < coordenadas.length; i++) {
+        const c1 = coordenadas[i - 1];
+        const c2 = coordenadas[i];
+        const cor = vmax > vmin ? `rgb(${Math.round(255 * (c2.speed - vmin) / (vmax - vmin))},0,${Math.round(255 * (1 - (c2.speed - vmin) / (vmax - vmin)))})` : '#0000ff';
+        L.polyline([
+            [c1.lat, c1.lon],
+            [c2.lat, c2.lon]
+        ], {color: cor, weight: 5, opacity: 0.9}).addTo(window.map);
+    }
+    window.map.fitBounds(coordenadas.map(c => [c.lat, c.lon]));
+}
+        function desenharGraficos(coordenadas) {
+            console.log('[desenharGraficos] coordenadas:', coordenadas);
+            lastCoords = coordenadas;
+            // Preparar dados de distância e velocidade
+            let dist = 0;
+            const distancias = [0];
+            const velocidades = [];
+            const fcs = [];
+            for (let i = 0; i < coordenadas.length; i++) {
+                // Filter and smooth speed data
+                let speed = coordenadas[i].speed || 0;
+                // Apply simple moving average for smoothing (window of 3)
+                if (i >= 2 && velocidades.length >= 2) {
+                    const prev1 = velocidades[velocidades.length - 1] || 0;
+                    const prev2 = velocidades[velocidades.length - 2] || 0;
+                    speed = (speed + prev1 + prev2) / 3;
+                }
+                velocidades.push(Math.round(speed * 10) / 10); // Round to 1 decimal
+                fcs.push(coordenadas[i].heart_rate !== undefined ? coordenadas[i].heart_rate : null);
+                if (i > 0) {
+                    const dx = Math.sqrt(
+                        Math.pow(coordenadas[i].lat - coordenadas[i-1].lat, 2) +
+                        Math.pow(coordenadas[i].lon - coordenadas[i-1].lon, 2)
+                    );
+                    dist += dx * 111.32; // Aproximação: 1 grau ~ 111.32 km
+                }
+                distancias.push(dist);
+            }
+            // Converter para km e arredondar a 1 casa
+            const distanciasKm = distancias.map(d => Math.round(d * 10) / 10);
+            // Velocidade
+            const canvasVel = document.getElementById('grafico-velocidade');
+            if (!canvasVel || canvasVel.offsetWidth === 0) {
+                console.warn('Canvas velocidade não está visível, aguardando...');
+                setTimeout(() => desenharGraficos(coordenadas), 100);
+                return;
+            }
+            const ctxVel = canvasVel.getContext('2d');
+            if (chartVel) chartVel.destroy();
+            chartVel = new Chart(ctxVel, {
+                type: 'line',
+                data: {
+                    labels: distanciasKm,
+                    datasets: [{
+                        label: 'Velocidade (km/h)',
+                        data: velocidades,
+                        borderColor: '#27ae60',
+                        backgroundColor: 'rgba(39,174,96,0.08)',
+                        pointRadius: 0,
+                        borderWidth: 2,
+                        tension: 0.2,
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    layout: { padding: { left: 0, right: 0, top: 8, bottom: 8 } },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: false },
+                            grid: { color: '#f4f4f4' },
+                            type: 'linear',
+                            min: 0,
+                            max: Math.ceil(Math.max(...distanciasKm)), // Limitar ao máximo da distância real
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return Math.round(value) + ' km';
+                                }
+                            }
+                        },
+                        y: { display: true, title: { display: true, text: 'km/h' }, grid: { color: '#eee' } }
+                    },
+                    elements: { line: { borderJoinStyle: 'round' } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    interaction: { mode: 'index', intersect: false },
+                    onHover: (event, chartElements) => {
+                        if (chartElements && chartElements.length > 0) {
+                            const idx = chartElements[0].index;
+                            syncHover(idx);
+                        } else {
+                            syncHover(null);
+                        }
+                    }
+                }
+            });
+            // FC
+            const canvasFC = document.getElementById('grafico-fc');
+            if (!canvasFC || canvasFC.offsetWidth === 0) {
+                console.warn('Canvas FC não está visível, aguardando...');
+                setTimeout(() => desenharGraficos(coordenadas), 100);
+                return;
+            }
+            const ctxFC = canvasFC.getContext('2d');
+            if (chartFC) chartFC.destroy();
+            chartFC = new Chart(ctxFC, {
+                type: 'line',
+                data: {
+                    labels: distanciasKm,
+                    datasets: [{
+                        label: 'Frequência Cardíaca (bpm)',
+                        data: fcs,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231,76,60,0.08)',
+                        pointRadius: 0,
+                        borderWidth: 2,
+                        tension: 0.2,
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    layout: { padding: { left: 0, right: 0, top: 8, bottom: 8 } },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: false },
+                            grid: { color: '#f4f4f4' },
+                            type: 'linear',
+                            min: 0,
+                            max: Math.ceil(Math.max(...distanciasKm)), // Limitar ao máximo da distância real
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return Math.round(value) + ' km';
+                                }
+                            }
+                        },
+                        y: { display: true, title: { display: true, text: 'bpm' }, grid: { color: '#eee' } }
+                    },
+                    elements: { line: { borderJoinStyle: 'round' } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    interaction: { mode: 'index', intersect: false },
+                    onHover: (event, chartElements) => {
+                        if (chartElements && chartElements.length > 0) {
+                            const idx = chartElements[0].index;
+                            syncHover(idx);
+                        } else {
+                            syncHover(null);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Sincronizar hover entre gráficos e mapa
+        function syncHover(idx) {
+            if (lastHoverIndex === idx) return;
+            lastHoverIndex = idx;
+            // Sincronizar tooltip dos gráficos
+            if (chartVel && chartFC) {
+                if (idx !== null) {
+                    chartVel.setActiveElements([{datasetIndex:0, index:idx}]);
+                    chartFC.setActiveElements([{datasetIndex:0, index:idx}]);
+                } else {
+                    chartVel.setActiveElements([]);
+                    chartFC.setActiveElements([]);
+                }
+                chartVel.update();
+                chartFC.update();
+            }
+            // Destacar ponto no mapa
+            if (window.map && lastCoords && idx !== null && lastCoords[idx]) {
+                if (hoverMarker) { window.map.removeLayer(hoverMarker); }
+                hoverMarker = L.circleMarker([lastCoords[idx].lat, lastCoords[idx].lon], {
+                    radius: 9,
+                    color: '#e67e22',
+                    fillColor: '#fff',
+                    fillOpacity: 0.9,
+                    weight: 3
+                }).addTo(window.map);
+            } else if (window.map && hoverMarker) {
+                window.map.removeLayer(hoverMarker);
+                hoverMarker = null;
+            }
+        }
+
+        // Sistema de animação de vento no mapa
+        class WindAnimation {
+            constructor(mapId, canvasId) {
+                this.mapElement = document.getElementById(mapId);
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+                this.particles = [];
+                this.animationId = null;
+                this.windData = { speed: 5, direction: 45 }; // Default wind
+                this.isRunning = false;
+                this.isInitialized = false;
+                
+                // Configuração mais simples
+                if (this.canvas && this.ctx && this.mapElement) {
+                    console.log('🌪️ WindAnimation inicializada');
+                    this.initializeParticles();
+                } else {
+                    throw new Error('Elementos não encontrados para WindAnimation');
+                }
+            }
+            
+            // Função simplificada - canvas já foi configurado externamente
+            
+            initializeParticles() {
+                // Verificar se o canvas tem dimensões válidas
+                if (this.canvas.width <= 0 || this.canvas.height <= 0) {
+                    console.warn('🌪️ Canvas sem dimensões válidas, aguardando...');
+                    return false;
+                }
+                
+                this.particles = [];
+                const numParticles = 150; // Muito mais partículas para maior visibilidade
+                
+                for (let i = 0; i < numParticles; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        age: Math.random() * 100,
+                        maxAge: 80 + Math.random() * 60, // Partículas vivem mais tempo
+                        speed: 0.8 + Math.random() * 0.4 // Velocidade individual variável
+                    });
+                }
+                
+                this.isInitialized = true;
+                console.log(`🌪️ ${numParticles} partículas inicializadas em canvas ${this.canvas.width}x${this.canvas.height}`);
+                return true;
+            }
+            
+            updateWindData(speed, direction) {
+                this.windData.speed = speed || 5;
+                this.windData.direction = direction || 45;
+            }
+            
+            animate() {
+                if (!this.ctx || !this.isRunning || !this.isInitialized) return;
+                
+                // Verificar se o canvas tem dimensões válidas antes de desenhar
+                if (this.canvas.width <= 0 || this.canvas.height <= 0) {
+                    console.warn('🌪️ Canvas sem dimensões na animação, parando...');
+                    this.stop();
+                    return;
+                }
+                
+                // Limpar canvas com fade effect mais suave para manter trails
+                this.ctx.fillStyle = 'rgba(248, 250, 252, 0.05)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Converter direção do vento para radianos
+                const windAngle = (this.windData.direction - 90) * Math.PI / 180;
+                const windVx = Math.cos(windAngle) * this.windData.speed * 1.5; // Movimento mais rápido
+                const windVy = Math.sin(windAngle) * this.windData.speed * 1.5;
+                
+                // Atualizar e desenhar partículas
+                this.particles.forEach(particle => {
+                    // Atualizar posição com velocidade individual
+                    particle.x += windVx * particle.speed;
+                    particle.y += windVy * particle.speed;
+                    particle.age++;
+                    
+                    // Reset particle se sair dos limites ou envelhecer
+                    if (particle.x < -50 || particle.x > this.canvas.width + 50 || 
+                        particle.y < -50 || particle.y > this.canvas.height + 50 || 
+                        particle.age > particle.maxAge) {
+                        
+                        // Reentrar pela borda oposta ao vento
+                        if (windVx > 0) particle.x = -30; else particle.x = this.canvas.width + 30;
+                        if (windVy > 0) particle.y = -30; else particle.y = this.canvas.height + 30;
+                        
+                        // Posicionar aleatoriamente na borda
+                        if (Math.random() > 0.5) {
+                            particle.x = Math.random() * this.canvas.width;
+                        } else {
+                            particle.y = Math.random() * this.canvas.height;
+                        }
+                        
+                        particle.age = 0;
+                        particle.maxAge = 80 + Math.random() * 60;
+                        particle.speed = 0.8 + Math.random() * 0.4;
+                    }
+                    
+                    // Desenhar partícula com muito mais visibilidade
+                    const alpha = Math.max(0.3, 1 - (particle.age / particle.maxAge)); // Alpha mínimo
+                    const intensity = Math.min(this.windData.speed / 8, 1);
+                    
+                    // Cores mais vibrantes e visíveis
+                    this.ctx.strokeStyle = `rgba(30, 144, 255, ${alpha * 0.9})`; // Azul mais forte
+                    this.ctx.lineWidth = 2.5; // Linhas mais grossas
+                    this.ctx.beginPath();
+                    
+                    // Desenhar linha maior na direção do vento
+                    const lineLength = 15; // Linhas mais longas
+                    const startX = particle.x - windVx * lineLength / (this.windData.speed * 2);
+                    const startY = particle.y - windVy * lineLength / (this.windData.speed * 2);
+                    
+                    this.ctx.moveTo(startX, startY);
+                    this.ctx.lineTo(particle.x, particle.y);
+                    this.ctx.stroke();
+                    
+                    // Adicionar ponto brilhante na frente
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, 1, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                
+                this.animationId = requestAnimationFrame(() => this.animate());
+            }
+            
+            start() {
+                if (!this.isRunning && this.ctx && this.isInitialized) {
+                    this.isRunning = true;
+                    console.log('🌪️ Animação de vento iniciada!');
+                    this.animate();
+                } else if (!this.isInitialized) {
+                    console.warn('🌪️ Tentando inicializar partículas...');
+                    if (this.initializeParticles()) {
+                        this.start(); // Tentar novamente
+                    }
+                }
+            }
+            
+            stop() {
+                this.isRunning = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+            
+            clear() {
+                if (this.ctx) {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                }
+            }
+        }
+        
+        // Instância global da animação de vento
+        let windAnimation = null;
+        
+        // Função para inicializar animação de vento quando o mapa estiver pronto
+        function initWindAnimation() {
+            // Limpar animação anterior se existir
+            if (windAnimation) {
+                windAnimation.stop();
+                windAnimation = null;
+            }
+            
+            // Aguardar que os elementos existam
+            const waitForElements = () => {
+                const mapElement = document.getElementById('map');
+                const canvasElement = document.getElementById('wind-canvas');
+                
+                if (!mapElement || !canvasElement) {
+                    console.log('🌪️ Aguardando elementos do DOM...');
+                    setTimeout(waitForElements, 200);
+                    return;
+                }
+                
+                console.log('🌪️ Elementos encontrados, iniciando configuração...');
+                startWindAnimation(mapElement, canvasElement);
+            };
+            
+            waitForElements();
+        }
+        
+        function startWindAnimation(mapElement, canvasElement) {
+            // Usar ResizeObserver para aguardar que o mapa tenha dimensões
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    const { width, height } = entry.contentRect;
+                    
+                    if (width > 0 && height > 0 && !windAnimation) {
+                        console.log(`🌪️ Mapa com dimensões válidas: ${width}x${height}`);
+                        
+                        // Parar o observer
+                        resizeObserver.disconnect();
+                        
+                        // Aguardar um pouco mais para garantir que tudo está estabilizado
+                        setTimeout(() => {
+                            try {
+                                // Criar animação
+                                windAnimation = new WindAnimation('map', 'wind-canvas');
+                                
+                                // Simular dados de vento
+                                const windSpeed = 8 + Math.random() * 12;
+                                const windDirection = Math.random() * 360;
+                                
+                                windAnimation.updateWindData(windSpeed, windDirection);
+                                windAnimation.start();
+                                
+                                console.log(`🌪️ Animação criada - Velocidade: ${windSpeed.toFixed(1)} km/h, Direção: ${windDirection.toFixed(0)}°`);
+                            } catch (error) {
+                                console.error('🌪️ Erro ao criar animação:', error);
+                            }
+                        }, 500);
+                        break;
+                    }
+                }
+            });
+            
+            // Observar mudanças no tamanho do mapa
+            resizeObserver.observe(mapElement);
+            
+            // Fallback com timeout
+            setTimeout(() => {
+                resizeObserver.disconnect();
+                if (!windAnimation) {
+                    console.warn('🌪️ Timeout: abandonando inicialização da animação de vento');
+                }
+            }, 8000);
+        }
+        
+        // Função para parar e limpar animação de vento
+        function stopWindAnimation() {
+            if (windAnimation) {
+                windAnimation.stop();
+                windAnimation.clear();
+                windAnimation = null;
+                console.log('🌪️ Animação de vento parada');
+            }
+        }
+        
+        // Versão CSS simples da animação de vento (sem canvas)
+        function initSimpleWindAnimation() {
+            const mapElement = document.getElementById('map');
+            if (!mapElement) return;
+            
+            console.log('🌪️ Iniciando animação de vento CSS...');
+            
+            // Criar partículas CSS simples
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'wind-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 3 + 's';
+                particle.style.animationDuration = (2 + Math.random() * 2) + 's';
+                
+                mapElement.appendChild(particle);
+            }
+            
+            console.log('🌪️ ✅ Animação CSS criada com 20 partículas');
+        }
+        
+        // Versão super defensiva da inicialização
+        function initWindAnimationSafe() {
+            try {
+                // Verificar se já existe animação
+                if (windAnimation) {
+                    console.log('🌪️ Animação já existe, ignorando...');
+                    return;
+                }
+                
+                // Aguardar elementos DOM
+                const checkElements = () => {
+                    const mapEl = document.getElementById('map');
+                    const canvasEl = document.getElementById('wind-canvas');
+                    
+                    if (!mapEl || !canvasEl) {
+                        console.log('🌪️ DOM ainda não pronto, aguardando...');
+                        setTimeout(checkElements, 300);
+                        return;
+                    }
+                    
+                    // Verificar se o mapa tem dimensões
+                    const rect = mapEl.getBoundingClientRect();
+                    if (rect.width < 50 || rect.height < 50) {
+                        console.log('🌪️ Mapa ainda sem dimensões, aguardando...');
+                        setTimeout(checkElements, 300);
+                        return;
+                    }
+                    
+                    // Verificar se o Leaflet está carregado
+                    if (typeof L === 'undefined' || !window.map) {
+                        console.log('🌪️ Leaflet ainda não está pronto, aguardando...');
+                        setTimeout(checkElements, 300);
+                        return;
+                    }
+                    
+                    // Tudo OK, criar animação
+                    console.log(`🌪️ Condições OK: mapa ${rect.width}x${rect.height}, criando animação...`);
+                    createWindAnimation();
+                };
+                
+                checkElements();
+                
+            } catch (error) {
+                console.error('🌪️ Erro na inicialização segura:', error);
+            }
+        }
+        
+        function createWindAnimation() {
+            try {
+                // Última verificação antes de criar
+                const canvas = document.getElementById('wind-canvas');
+                const mapRect = document.getElementById('map').getBoundingClientRect();
+                
+                // Configurar canvas manualmente para garantir dimensões
+                canvas.width = Math.floor(mapRect.width);
+                canvas.height = Math.floor(mapRect.height);
+                canvas.style.width = mapRect.width + 'px';
+                canvas.style.height = mapRect.height + 'px';
+                
+                console.log(`🌪️ Canvas configurado manualmente: ${canvas.width}x${canvas.height}`);
+                
+                // Verificar se o canvas tem contexto válido
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    console.error('🌪️ Não foi possível obter contexto 2D');
+                    return;
+                }
+                
+                // Teste do contexto
+                ctx.fillStyle = 'rgba(0,0,0,0.01)';
+                ctx.fillRect(0, 0, 1, 1); // Teste mínimo
+                
+                // Se chegou aqui, está tudo OK
+                windAnimation = new WindAnimation('map', 'wind-canvas');
+                
+                const windSpeed = 8 + Math.random() * 12;
+                const windDirection = Math.random() * 360;
+                
+                windAnimation.updateWindData(windSpeed, windDirection);
+                windAnimation.start();
+                
+                console.log(`🌪️ ✅ Animação criada com sucesso! Velocidade: ${windSpeed.toFixed(1)} km/h, Direção: ${windDirection.toFixed(0)}°`);
+                
+            } catch (error) {
+                console.error('🌪️ ❌ Erro ao criar animação:', error);
+            }
+        }
+        
+
+
+        // Inicialização da página
+        document.addEventListener('DOMContentLoaded', function() {
+            verificarStatusStrava();
+            
+            // Event listener para o checkbox do alérgico ao pólen
+            const alergicoPolenInput = document.getElementById('input-alergico-polen');
+            if (alergicoPolenInput) {
+                alergicoPolenInput.addEventListener('change', function() {
+                    console.log('Estado alérgico alterado:', this.checked);
+                    // Recarregar os dados meteorológicos com o novo estado
+                    const inputRegiao = document.getElementById('input-regiao');
+                    if (inputRegiao && inputRegiao.value.trim()) {
+                        // Simular o evento de mudança na região para recalcular
+                        inputRegiao.dispatchEvent(new Event('blur'));
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

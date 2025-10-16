@@ -1,0 +1,111 @@
+# Environment variables (CRÍTICO - NUNCA COMMITAR)
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# Credentials e API Keys (SEGURANÇA)
+*.key
+*.pem
+credentials.json
+secrets/
+config/local.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+env/
+venv/
+.venv/
+.venv-1/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# OS específicos
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dados locais e temporários
+dados/
+temp/
+tmp/
+strava_json/
+*.tmp
+*.cache
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage e testes
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Flask
+instance/
+.webassets-cache
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Databases locais (para desenvolvimento)
+*.db
+*.sqlite
+*.sqlite3
+
+# Arquivos de configuração local
+local_settings.py
+settings_local.py
