@@ -29,7 +29,7 @@ jobs:
 
       - name: Correr Snyk e gerar relatório
         run: |
-          snyk test --file=requirements.txt --severity-threshold=high --json > snyk-report.json
+          snyk test --file=requirements.txt --json > snyk-report.json
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
