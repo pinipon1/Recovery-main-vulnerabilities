@@ -37,7 +37,7 @@ jobs:
       # --- Teste 2: verificar se existem vulnerabilidades HIGH ou CRITICAL ---
       - name: Verificar se há vulnerabilidades graves (High/Critical)
         run: |
-          snyk test --file=requirements.txt --severity-threshold=high
+          snyk test --file=requirements.txt --severity-threshold=medium
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
