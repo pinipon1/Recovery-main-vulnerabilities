@@ -1,0 +1,48 @@
+trigger:
+  - main  # corre automaticamente quando há push na main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  SNYK_TOKEN: $(SNYK_TOKEN)  # secret definido no portal do Azure DevOps
+
+steps:
+  - checkout: self
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+    displayName: "Configurar Python"
+
+  - script: |
+      pip install -r requirements.txt
+    displayName: "Instalar dependências"
+
+  - script: |
+      npm install -g snyk snyk-to-html
+    displayName: "Instalar Snyk e conversor HTML"
+
+  # --- Teste 1: gerar relatório completo ---
+  - script: |
+      snyk test --file=requirements.txt --json > snyk-report.json || true
+    env:
+      SNYK_TOKEN: $(SNYK_TOKEN)
+    displayName: "Correr Snyk e gerar relatório completo"
+
+  # --- Teste 2: falhar se houver High/Critical ---
+  - script: |
+      snyk test --file=requirements.txt --severity-threshold=high
+    env:
+      SNYK_TOKEN: $(SNYK_TOKEN)
+    displayName: "Verificar vulnerabilidades High/Critical"
+
+  - script: |
+      snyk-to-html -i snyk-report.json -o snyk-report.html
+    displayName: "Converter relatório em HTML"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: 'snyk-report.html'
+      ArtifactName: 'snyk-html-report'
+    displayName: "Guardar relatório HTML como artefacto"
