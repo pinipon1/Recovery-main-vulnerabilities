@@ -2,7 +2,7 @@ trigger:
   - main  # corre automaticamente quando há push na main   
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'Default'
 
 variables:
   SNYK_TOKEN: $(SNYK_TOKEN)  # secret definido no portal do Azure DevOps
