@@ -1,5 +1,5 @@
 trigger:
-  - main  # corre automaticamente quando há push na main
+  - main  # corre automaticamente quando há push na main 
 
 pool:
   vmImage: 'ubuntu-latest'
