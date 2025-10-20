@@ -4,21 +4,16 @@ pool:
 steps:
 - checkout: self
 
-- cmd: python --version
+- script: cmd /c "python --version"
   displayName: "Verificar versão do Python"
 
-- cmd: |
-    pip install -r requirements.txt
-    npm install -g snyk snyk-to-html
-    snyk test --file=requirements.txt --json > snyk-report.json || exit /b 0
-    snyk-to-html -i snyk-report.json -o snyk-report.html
+- script: cmd /c "pip install -r requirements.txt && npm install -g snyk snyk-to-html && snyk test --file=requirements.txt --json > snyk-report.json || exit /b 0 && snyk-to-html -i snyk-report.json -o snyk-report.html"
   displayName: "Executar Snyk (relatório completo)"
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
 
-# (Opcional) falhar se vulnerabilidade High/Critical
-- cmd: |
-    snyk test --file=requirements.txt --severity-threshold=high
+# (Opcional) falhar se houver vulnerabilidades High/Critical
+- script: cmd /c "snyk test --file=requirements.txt --severity-threshold=high"
   displayName: "Falhar se houver vulnerabilidades High/Critical"
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
@@ -28,4 +23,5 @@ steps:
   inputs:
     pathToPublish: snyk-report.html
     artifactName: snyk-html-report
+
 
