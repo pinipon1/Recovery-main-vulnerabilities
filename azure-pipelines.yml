@@ -10,10 +10,8 @@ variables:
 steps:
   - checkout: self
 
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.x'
-    displayName: "Configurar Python"
+  - script: python --version
+    displayName: "Verificar versão do Python"
 
   - script: |
       pip install -r requirements.txt
