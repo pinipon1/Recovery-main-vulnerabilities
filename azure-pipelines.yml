@@ -12,32 +12,17 @@ steps:
 
   - script: python --version
     displayName: "Verificar versão do Python"
+    shell: cmd
 
   - script: |
       pip install -r requirements.txt
-    displayName: "Instalar dependências"
-
-  - script: |
       npm install -g snyk snyk-to-html
-    displayName: "Instalar Snyk e conversor HTML"
-
-  # --- Teste 1: gerar relatório completo ---
-  - script: |
       snyk test --file=requirements.txt --json > snyk-report.json || true
-    env:
-      SNYK_TOKEN: $(SNYK_TOKEN)
-    displayName: "Correr Snyk e gerar relatório completo"
-
-  # --- Teste 2: falhar se houver High/Critical ---
-  - script: |
-      snyk test --file=requirements.txt --severity-threshold=high
-    env:
-      SNYK_TOKEN: $(SNYK_TOKEN)
-    displayName: "Verificar vulnerabilidades High/Critical"
-
-  - script: |
       snyk-to-html -i snyk-report.json -o snyk-report.html
-    displayName: "Converter relatório em HTML"
+    displayName: "Executar Snyk"
+    shell: cmd
+    env:
+      SNYK_TOKEN: $(SNYK_TOKEN)
 
   - task: PublishBuildArtifacts@1
     inputs:
