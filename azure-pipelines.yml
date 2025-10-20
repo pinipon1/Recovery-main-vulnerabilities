@@ -11,32 +11,32 @@ steps:
   - checkout: self
 
   # Verificar que o Python local está acessível
-  - script: python --version
+  - pwsh: python --version
     displayName: "Verificar versão do Python local"
 
-  - script: |
+  - pwsh: |
       pip install -r requirements.txt
     displayName: "Instalar dependências"
 
-  - script: |
+  - pwsh: |
       npm install -g snyk snyk-to-html
     displayName: "Instalar Snyk e conversor HTML"
 
   # --- Teste 1: gerar relatório completo ---
-  - script: |
+  - pwsh: |
       snyk test --file=requirements.txt --json > snyk-report.json || true
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     displayName: "Correr Snyk e gerar relatório completo"
 
   # --- Teste 2: falhar se houver High/Critical ---
-  - script: |
+  - pwsh: |
       snyk test --file=requirements.txt --severity-threshold=high
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     displayName: "Verificar vulnerabilidades High/Critical"
 
-  - script: |
+  - pwsh: |
       snyk-to-html -i snyk-report.json -o snyk-report.html
     displayName: "Converter relatório em HTML"
 
