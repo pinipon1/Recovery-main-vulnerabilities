@@ -1,27 +1,48 @@
+trigger:
+  - main  # corre automaticamente quando há push na main   
+
 pool:
   name: 'Default'
 
+variables:
+  SNYK_TOKEN: $(SNYK_TOKEN)  # secret definido no portal do Azure DevOps
+
 steps:
-- checkout: self
+  - checkout: self
 
-- script: cmd /c "python --version"
-  displayName: "Verificar versão do Python"
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+    displayName: "Configurar Python"
 
-- script: cmd /c "pip install -r requirements.txt && npm install -g snyk snyk-to-html && snyk test --file=requirements.txt --json > snyk-report.json || exit /b 0 && snyk-to-html -i snyk-report.json -o snyk-report.html"
-  displayName: "Executar Snyk (relatório completo)"
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
+  - script: |
+      pip install -r requirements.txt
+    displayName: "Instalar dependências"
 
-# (Opcional) falhar se houver vulnerabilidades High/Critical
-- script: cmd /c "snyk test --file=requirements.txt --severity-threshold=high"
-  displayName: "Falhar se houver vulnerabilidades High/Critical"
-  env:
-    SNYK_TOKEN: $(SNYK_TOKEN)
+  - script: |
+      npm install -g snyk snyk-to-html
+    displayName: "Instalar Snyk e conversor HTML"
 
-- task: PublishBuildArtifacts@1
-  displayName: "Guardar relatório HTML"
-  inputs:
-    pathToPublish: snyk-report.html
-    artifactName: snyk-html-report
+  # --- Teste 1: gerar relatório completo ---
+  - script: |
+      snyk test --file=requirements.txt --json > snyk-report.json || true
+    env:
+      SNYK_TOKEN: $(SNYK_TOKEN)
+    displayName: "Correr Snyk e gerar relatório completo"
 
+  # --- Teste 2: falhar se houver High/Critical ---
+  - script: |
+      snyk test --file=requirements.txt --severity-threshold=high
+    env:
+      SNYK_TOKEN: $(SNYK_TOKEN)
+    displayName: "Verificar vulnerabilidades High/Critical"
 
+  - script: |
+      snyk-to-html -i snyk-report.json -o snyk-report.html
+    displayName: "Converter relatório em HTML"
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: 'snyk-report.html'
+      ArtifactName: 'snyk-html-report'
+    displayName: "Guardar relatório HTML como artefacto"
