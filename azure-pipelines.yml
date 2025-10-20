@@ -1,13 +1,13 @@
 pool:
-  name: 'Default'   # usa o teu agente self-hosted
+  name: 'Default'
 
 steps:
 - checkout: self
 
-- script: python --version
+- cmd: python --version
   displayName: "Verificar versão do Python"
 
-- script: |
+- cmd: |
     pip install -r requirements.txt
     npm install -g snyk snyk-to-html
     snyk test --file=requirements.txt --json > snyk-report.json || exit /b 0
@@ -16,8 +16,8 @@ steps:
   env:
     SNYK_TOKEN: $(SNYK_TOKEN)
 
-# (Opcional) Falhar pipeline se houver High/Critical
-- script: |
+# (Opcional) falhar se vulnerabilidade High/Critical
+- cmd: |
     snyk test --file=requirements.txt --severity-threshold=high
   displayName: "Falhar se houver vulnerabilidades High/Critical"
   env:
@@ -28,3 +28,4 @@ steps:
   inputs:
     pathToPublish: snyk-report.html
     artifactName: snyk-html-report
+
