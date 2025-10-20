@@ -1,31 +1,30 @@
-trigger:
-  - main  # corre automaticamente quando há push na main   
-
 pool:
-  name: 'Default'
-
-variables:
-  SNYK_TOKEN: $(SNYK_TOKEN)  # secret definido no portal do Azure DevOps
+  name: 'Default'   # usa o teu agente self-hosted
 
 steps:
-  - checkout: self
+- checkout: self
 
-  - script: python --version
-    displayName: "Verificar versão do Python"
-    shell: cmd
+- script: python --version
+  displayName: "Verificar versão do Python"
 
-  - script: |
-      pip install -r requirements.txt
-      npm install -g snyk snyk-to-html
-      snyk test --file=requirements.txt --json > snyk-report.json || true
-      snyk-to-html -i snyk-report.json -o snyk-report.html
-    displayName: "Executar Snyk"
-    shell: cmd
-    env:
-      SNYK_TOKEN: $(SNYK_TOKEN)
-      
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: 'snyk-report.html'
-      ArtifactName: 'snyk-html-report'
-    displayName: "Guardar relatório HTML como artefacto"
+- script: |
+    pip install -r requirements.txt
+    npm install -g snyk snyk-to-html
+    snyk test --file=requirements.txt --json > snyk-report.json || exit /b 0
+    snyk-to-html -i snyk-report.json -o snyk-report.html
+  displayName: "Executar Snyk (relatório completo)"
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+
+# (Opcional) Falhar pipeline se houver High/Critical
+- script: |
+    snyk test --file=requirements.txt --severity-threshold=high
+  displayName: "Falhar se houver vulnerabilidades High/Critical"
+  env:
+    SNYK_TOKEN: $(SNYK_TOKEN)
+
+- task: PublishBuildArtifacts@1
+  displayName: "Guardar relatório HTML"
+  inputs:
+    pathToPublish: snyk-report.html
+    artifactName: snyk-html-report
