@@ -39,5 +39,5 @@ steps:
     inputs:
       pathToPublish: 'snyk-report.html'
       artifactName: 'snyk-html-report'
-    displayName: "Guardar relatório HTML"
+    displayName: "Guardar relatório HTML" 
 
