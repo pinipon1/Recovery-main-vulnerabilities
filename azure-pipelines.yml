@@ -6,11 +6,6 @@ pool:
 
 steps:
   - checkout: self
-
-  - pwsh: |
-      Write-Host "Versão do PowerShell em uso:"
-      $PSVersionTable.PSVersion
-    displayName: "Verificar versão do PowerShell 7"
  
   # Confirmar Python 
   - pwsh: python --version
