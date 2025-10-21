@@ -12,7 +12,7 @@ steps:
       $PSVersionTable.PSVersion
     displayName: "Verificar versão do PowerShell 7"
  
-  # Confirmar Python
+  # Confirmar Python 
   - pwsh: python --version
     displayName: "Verificar versão do Python"
 
