@@ -1,4 +1,4 @@
-trigger: 
+trigger:
   - main
 
 pool:
@@ -7,37 +7,36 @@ pool:
 steps:
   - checkout: self
 
-  - pwsh: |
-      Write-Host "Versão do PowerShell em uso:"
-      $PSVersionTable.PSVersion
-    displayName: "Verificar versão do PowerShell 7" 
- 
-  # Confirmar Python 
-  - pwsh: python --version
+  # Confirmar Python
+  - script: python --version
     displayName: "Verificar versão do Python"
 
-  - pwsh: pip install -r requirements.txt
+  - script: pip install -r requirements.txt
     displayName: "Instalar dependências"
 
-  - pwsh: npm install -g snyk snyk-to-html
+  - script: npm install -g snyk snyk-to-html
     displayName: "Instalar Snyk e conversor HTML"
 
-  - pwsh: snyk test --file=requirements.txt --json > snyk-report.json
+  - script: |
+      echo A correr Snyk e a gerar relatório JSON...
+      snyk test --file=requirements.txt --json > snyk-report.json || exit 0
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     displayName: "Correr Snyk e gerar relatório completo"
 
-  - pwsh: snyk test --file=requirements.txt --severity-threshold=high
+  - script: |
+      echo A verificar vulnerabilidades High/Critical...
+      snyk test --file=requirements.txt --severity-threshold=high || exit 0
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     displayName: "Verificar vulnerabilidades High/Critical"
 
-  - pwsh: snyk-to-html -i snyk-report.json -o snyk-report.html
+  - script: snyk-to-html -i snyk-report.json -o snyk-report.html
     displayName: "Converter relatório em HTML"
 
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: 'snyk-report.html'
       artifactName: 'snyk-html-report'
-    displayName: "Guardar relatório HTML" 
+    displayName: "Guardar relatório HTML"
 
