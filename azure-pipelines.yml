@@ -36,11 +36,10 @@ steps:
 
   - task: SnykSecurityScan@1
     inputs:
-      serviceConnectionEndpoint: 'Snyk Service Connection'
+      serviceConnectionEndpoint: 'Snyk report'
       testType: 'app'
       monitorWhen: 'always'
       failOnIssues: false
-      projectName: 'MyApp'
 
 
   - task: PublishBuildArtifacts@1
