@@ -34,6 +34,15 @@ steps:
   - script: snyk-to-html -i snyk-report.json -o snyk-report.html
     displayName: "Converter relatório em HTML"
 
+  - task: SnykSecurityScan@1
+    inputs:
+      serviceConnectionEndpoint: 'Snyk Service Connection'
+      testType: 'app'
+      monitorWhen: 'always'
+      failOnIssues: false
+      projectName: 'MyApp'
+
+
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: 'snyk-report.html'
