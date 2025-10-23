@@ -23,6 +23,27 @@ steps:
     env:
       SNYK_TOKEN: $(SNYK_TOKEN)
     displayName: "Correr Snyk e gerar relatório completo"
+    
+#####
+    # Gera o resumo de severidade (Markdown)
+  - script: |
+      node -v
+      echo Gerar resumo de severidade a partir do snyk-report.json...
+      node metrics_severity.js snyk-report.json severity-summary.md
+    displayName: "Calcular percentagens por severidade (Node)"
+
+# Anexa o resumo ao Summary do pipeline
+  - script: |
+      echo ##vso[task.uploadsummary]severity-summary.md
+    displayName: "Publicar resumo no Summary"
+
+# (Opcional) Guardar também o markdown como artefacto
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: 'severity-summary.md'
+      artifactName: 'snyk-metrics'
+    displayName: "Publicar resumo de severidade (artefacto)"
+######
 
   - script: |
       echo A verificar vulnerabilidades High/Critical...
